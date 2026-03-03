@@ -10,10 +10,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .month-btn.active { background-color: #1e40af; color: white; border-color: #1e40af; }
-        .paid-row { opacity: 0.5; background-color: #f8fafc; }
+        .paid-row { opacity: 0.5; background-color: #f8fafc; transition: all 0.3s ease; }
         .paid-row p { text-decoration: line-through; }
         
-        /* Animação de troca de mês */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -21,9 +20,31 @@
         .animate-fade-month {
             animation: fadeIn 0.4s ease-out forwards;
         }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-20 text-slate-900">
+    
+    <!-- Tela de Carregamento -->
+    <div id="loader" class="loading-overlay">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p class="text-slate-500 font-bold text-sm animate-pulse">Sincronizando com a Nuvem...</p>
+    </div>
+
     <div class="max-w-6xl mx-auto p-4 md:p-8">
         
         <!-- Header -->
@@ -33,314 +54,296 @@
                     <i data-lucide="trending-up" class="text-blue-600 w-8 h-8"></i>
                     Planejamento Anual 2026
                 </h1>
-                <p class="text-slate-500 font-medium tracking-tight">Fluxo por Quinzenas e Controle de Pagamentos</p>
+                <p class="text-slate-500 font-medium tracking-tight">Luis & Letícia • Controle Sincronizado</p>
             </div>
             
             <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-200" id="month-selector">
-                <!-- Meses gerados por JS -->
+                <!-- Meses via JS -->
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Coluna Principal: Janelas de Pagamento -->
+            <!-- Coluna Principal -->
             <div class="lg:col-span-2 space-y-6" id="main-content-area">
                 
-                <!-- Resumo do Mês Selecionado -->
+                <!-- Resumo -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
                         <h2 class="text-2xl font-black text-slate-800" id="current-month-display">Março</h2>
-                        <p class="text-sm text-slate-400 font-bold uppercase tracking-widest">Status Geral</p>
+                        <div id="sync-badge" class="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-400 uppercase">
+                            <i data-lucide="cloud-off" class="w-3 h-3"></i> Desconectado
+                        </div>
                     </div>
                     <div class="flex gap-4">
                         <div class="text-right">
-                            <p class="text-[10px] font-black text-slate-400 uppercase">Total Gasto</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Total Gasto</p>
                             <p class="text-xl font-black text-rose-600" id="monthly-total-label">R$ 0,00</p>
                         </div>
                         <div class="text-right border-l pl-4">
-                            <p class="text-[10px] font-black text-slate-400 uppercase">Saldo Livre</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Saldo Livre</p>
                             <p class="text-xl font-black text-blue-600" id="monthly-balance-label">R$ 0,00</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Alerta Estratégico de Reserva (Aparece apenas em Março) -->
-                <div id="march-warning" class="hidden">
+                <!-- Alerta de Reserva Março -->
+                <div id="march-warning" class="hidden animate-fade-month">
                     <div class="bg-amber-50 border-2 border-amber-100 rounded-3xl p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm">
                         <div class="bg-amber-100 p-4 rounded-2xl text-amber-600">
                             <i data-lucide="alert-triangle" class="w-8 h-8"></i>
                         </div>
-                        <div>
-                            <h3 class="font-black text-amber-900 uppercase text-xs tracking-widest mb-1">Atenção: Reserva para Abril</h3>
+                        <div class="flex-1 text-center md:text-left">
+                            <h3 class="font-black text-amber-900 uppercase text-xs tracking-widest mb-1">Reserva para Abril</h3>
                             <p class="text-sm text-amber-800 leading-relaxed">
-                                A primeira quinzena de Abril terá um déficit de <strong>R$ 172,05</strong> devido à Geladeira e ao Armário. 
-                                <span class="block mt-1 font-bold">Você precisa separar esse valor do saldo de Março para não atrasar nada!</span>
+                                Déficit de <strong>R$ 172,05</strong> na 1ª quinzena de Abril. Separe este valor de Março!
                             </p>
                         </div>
-                        <div class="bg-white px-4 py-2 rounded-xl border border-amber-200 text-center">
-                            <p class="text-[10px] font-bold text-amber-500 uppercase tracking-tighter">Valor Alvo</p>
+                        <div class="bg-white px-5 py-2 rounded-2xl border border-amber-200 text-center">
+                            <p class="text-[10px] font-bold text-amber-400 uppercase tracking-tighter">Meta Reserva</p>
                             <p class="text-lg font-black text-amber-900">R$ 172,05</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lista de Janelas -->
                 <div id="windows-container" class="space-y-6">
-                    <!-- As 4 janelas serão inseridas aqui -->
+                    <!-- Janelas via JS -->
                 </div>
             </div>
 
-            <!-- Coluna Lateral: Insights e Alívio -->
+            <!-- Coluna Lateral -->
             <div class="space-y-6">
-                
-                <!-- Card de Saldo Livre (Huskies) -->
+                <!-- Sobra Pets -->
                 <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
                     <i data-lucide="dog" class="absolute -right-8 -bottom-8 w-48 h-48 opacity-10 rotate-12"></i>
                     <div class="relative z-10 text-center md:text-left">
-                        <h3 class="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mb-2">Sobra p/ Compras e Pets</h3>
+                        <h3 class="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mb-2">Feira e Ração</h3>
                         <div class="flex items-baseline justify-center md:justify-start gap-1 mb-4">
                             <span class="text-sm font-bold text-slate-400">R$</span>
                             <span class="text-5xl font-black text-emerald-400" id="free-balance-card">0,00</span>
                         </div>
-                        <p class="text-slate-400 text-xs leading-relaxed mb-6">
-                            Este é o valor livre estimado após pagar todos os boletos do mês selecionado.
+                        <p id="health-indicator-text" class="text-slate-400 text-xs leading-relaxed mb-6">
+                            Calculando saúde financeira...
                         </p>
-                        <div id="health-indicator" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
-                            <!-- Status -->
-                        </div>
                     </div>
                 </div>
 
-                <!-- Calendário de Alívio -->
+                <!-- Alívios -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                    <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <i data-lucide="calendar-check" class="w-5 h-5 text-blue-600"></i>
-                        Calendário de Alívio
+                    <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2 uppercase text-xs tracking-widest">
+                        <i data-lucide="calendar-check" class="w-4 h-4 text-blue-600"></i>
+                        Linha do Tempo de Alívio
                     </h3>
-                    <div class="space-y-6">
-                        <div class="flex gap-4">
-                            <div class="flex flex-col items-center">
-                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">MAR</div>
-                                <div class="w-0.5 h-full bg-slate-100 mt-2"></div>
-                            </div>
-                            <div class="pb-4">
-                                <p class="text-sm font-extrabold text-slate-900">Quitação BS</p>
-                                <p class="text-[11px] text-slate-500 leading-tight">Última parcela de R$ 413,00. Alívio imediato no próximo mês.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="flex flex-col items-center">
-                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">MAI</div>
-                                <div class="w-0.5 h-full bg-slate-100 mt-2"></div>
-                            </div>
-                            <div class="pb-4">
-                                <p class="text-sm font-extrabold text-slate-900">Casa Pio (158)</p>
-                                <p class="text-[11px] text-slate-500 leading-tight">Fim da 3ª parcela. Mais fôlego no início do mês.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="flex flex-col items-center">
-                                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold">JUN</div>
-                                <div class="w-0.5 h-full bg-slate-100 mt-2"></div>
-                            </div>
-                            <div class="pb-4">
-                                <p class="text-sm font-extrabold text-slate-900">Móveis e Sapatos</p>
-                                <p class="text-[11px] text-slate-500 leading-tight">Fim do Guarda-roupa (223) e Casa Pio 2 (93).</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="flex flex-col items-center">
-                                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">SET</div>
-                            </div>
-                            <div>
-                                <p class="text-sm font-extrabold text-slate-900">Óculos</p>
-                                <p class="text-[11px] text-slate-500 leading-tight">Fim da última parcela de R$ 200.</p>
-                            </div>
-                        </div>
+                    <div class="space-y-6" id="relief-timeline">
+                        <!-- Gerado via JS para marcar o que já passou -->
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <script>
-        const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        let currentMonthIdx = 2; // Começa em Março
-        
-        let paidItems = {}; 
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const getIncomes = () => [
-            { id: 1, name: "Letícia (1ª Quinzena)", value: 830, details: "5º Dia Útil" },
-            { id: 2, name: "Luis (1ª Quinzena)", value: 887.77, details: "Dia 15" },
-            { id: 3, name: "Letícia (2ª Quinzena)", value: 648.40, details: "Dia 20" },
-            { id: 4, name: "Luis (2ª Quinzena)", value: 711.17, details: "Último Útil" }
-        ];
-
-        const getExpensesByWindow = (monthIdx) => {
-            const windows = { 1: [], 2: [], 3: [], 4: [] };
-
-            // JANELA 1 (Letícia 830)
-            windows[1].push({ name: "Youcine", value: 17, cat: "Mensal" });
-            windows[1].push({ name: "Internet", value: 100, cat: "Mensal" });
-            windows[1].push({ name: "Nubank", value: 16, cat: "Fatura" });
-            if (monthIdx === 2) windows[1].push({ name: "Energia (Jan)", value: 294, cat: "Atrasada" });
-            if (monthIdx <= 4) windows[1].push({ name: "Casa Pio 1", value: 158, cat: "Parcela" });
-            if (monthIdx >= 3) {
-                windows[1].push({ name: "Geladeira", value: 562.39, cat: "Parcela" });
-                windows[1].push({ name: "Armário", value: 148.66, cat: "Parcela" });
-            }
-
-            // JANELA 2 (Luis 887)
-            windows[2].push({ name: "Vilany", value: 550.66, cat: "Mensal" });
-            windows[2].push({ name: "Irmão", value: 30, cat: "Parcela" });
-
-            // JANELA 3 (Letícia 648)
-            if (monthIdx <= 5) {
-                windows[3].push({ name: "Guarda-roupa", value: 223, cat: "Parcela" });
-                windows[3].push({ name: "Casa Pio 2", value: 93.9, cat: "Parcela" });
-            }
-
-            // JANELA 4 (Luis 711)
-            windows[4].push({ name: "Energia (Mensal)", value: 340, cat: "Estimada" });
-            if (monthIdx === 2) windows[4].push({ name: "BS (QUITAÇÃO)", value: 413, cat: "ÚLTIMA!" });
-            if (monthIdx <= 8) windows[4].push({ name: "Óculos", value: 200, cat: "Parcela" });
-
-            return windows;
+        // CONFIGURAÇÃO FIREBASE (SUBSTITUA PELO SEU OBJETO DO CONSOLE)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOq-ucyKVgebl9dmBLHDXSL47rUIKjcUA",
+            authDomain: "financas-9e802.firebaseapp.com",
+            projectId: "financas-9e802",
+            storageBucket: "financas-9e802.firebasestorage.app",
+            messagingSenderId: "1010572219115",
+            appId: "1:1010572219115:web:b5b8b6a68e05731b3b64ae"
+};
         };
 
-        function togglePaid(monthIdx, itemName) {
-            const key = `${monthIdx}-${itemName}`;
-            paidItems[key] = !paidItems[key];
-            render();
-        }
+        // Fallback para ambiente de desenvolvimento (Canvas)
+        const activeConfig = (firebaseConfig.apiKey === "") ? JSON.parse(__firebase_config) : firebaseConfig;
+        const app = initializeApp(activeConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        function changeMonth(idx) {
+        const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        let currentMonthIdx = 2; 
+        let paidItems = {}; 
+
+        // Inicializar Auth
+        signInAnonymously(auth).catch(e => console.error("Erro Auth:", e));
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Escuta mudanças em tempo real no banco
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pagamentos_v1');
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        paidItems = docSnap.data().items || {};
+                    }
+                    updateSyncBadge(true);
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
+                    render();
+                }, (err) => {
+                    console.error("Erro Sync:", err);
+                    updateSyncBadge(false);
+                });
+            }
+        });
+
+        const updateSyncBadge = (online) => {
+            const badge = document.getElementById('sync-badge');
+            badge.innerHTML = online ? '<i data-lucide="cloud" class="w-3 h-3"></i> Sincronizado' : '<i data-lucide="cloud-off" class="w-3 h-3"></i> Offline';
+            badge.className = online ? 'mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-600 uppercase' : 'mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-50 text-[10px] font-bold text-rose-600 uppercase';
+            lucide.createIcons();
+        };
+
+        window.togglePaid = async (monthIdx, itemName) => {
+            const key = `${monthIdx}-${itemName}`;
+            const newStatus = !paidItems[key];
+            
+            // Atualiza localmente para feedback instantâneo
+            paidItems[key] = newStatus;
+            render();
+
+            // Salva na nuvem
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pagamentos_v1');
+            try {
+                await setDoc(docRef, { items: paidItems }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao salvar:", e);
+            }
+        };
+
+        window.changeMonth = (idx) => {
             const area = document.getElementById('main-content-area');
-            // Remove a classe para resetar a animação
             area.classList.remove('animate-fade-month');
-            
-            // Força reflow para o navegador perceber que a classe foi removida
             void area.offsetWidth; 
-            
             currentMonthIdx = idx;
             area.classList.add('animate-fade-month');
             render();
-        }
+        };
 
-        function render() {
-            const selector = document.getElementById('month-selector');
-            selector.innerHTML = '';
+        const getIncomes = () => [
+            { id: 1, name: "Letícia (1ª Q)", value: 830, details: "5º Dia Útil" },
+            { id: 2, name: "Luis (1ª Q)", value: 887.77, details: "Dia 15" },
+            { id: 3, name: "Letícia (2ª Q)", value: 648.40, details: "Dia 20" },
+            { id: 4, name: "Luis (2ª Q)", value: 711.17, details: "Último Útil" }
+        ];
+
+        const getExpensesByWindow = (m) => {
+            const w = { 1: [], 2: [], 3: [], 4: [] };
+            w[1].push({ name: "Youcine", value: 17, cat: "Fixa" }, { name: "Internet", value: 100, cat: "Fixa" }, { name: "Nubank", value: 16, cat: "Cartão" });
+            if (m === 2) w[1].push({ name: "Energia (Jan)", value: 294, cat: "Atrasada" });
+            if (m <= 4) w[1].push({ name: "Casa Pio 1", value: 158, cat: "Parcela" });
+            if (m >= 3) w[1].push({ name: "Geladeira", value: 562.39, cat: "Parcela" }, { name: "Armário", value: 148.66, cat: "Parcela" });
+            w[2].push({ name: "Vilany", value: 550.66, cat: "Mensal" }, { name: "Irmão", value: 30, cat: "3/20" });
+            if (m <= 5) w[3].push({ name: "Guarda-roupa", value: 223, cat: "Parcela" }, { name: "Casa Pio 2", value: 93.9, cat: "Parcela" });
+            w[4].push({ name: "Energia (Mensal)", value: 340, cat: "Consumo" });
+            if (m === 2) w[4].push({ name: "BS (QUITAÇÃO)", value: 413, cat: "Fim!" });
+            if (m <= 8) w[4].push({ name: "Óculos", value: 200, cat: "Parcela" });
+            return w;
+        };
+
+        const render = () => {
+            const sel = document.getElementById('month-selector');
+            sel.innerHTML = '';
             for (let i = 2; i < 12; i++) {
-                const btn = document.createElement('button');
-                btn.className = `month-btn px-4 py-2 rounded-xl text-xs font-black border border-slate-100 transition-all ${currentMonthIdx === i ? 'active shadow-lg shadow-blue-200' : 'bg-white text-slate-600 hover:bg-slate-50'}`;
-                btn.innerText = months[i].substring(0, 3).toUpperCase();
-                btn.onclick = () => changeMonth(i);
-                selector.appendChild(btn);
+                const b = document.createElement('button');
+                b.className = `month-btn px-4 py-2 rounded-xl text-[10px] font-black border border-slate-100 transition-all ${currentMonthIdx === i ? 'active shadow-lg shadow-blue-100' : 'bg-white text-slate-500 hover:bg-slate-50 uppercase'}`;
+                b.innerText = months[i].substring(0, 3);
+                b.onclick = () => changeMonth(i);
+                sel.appendChild(b);
             }
 
-            // Lógica do Alerta de Março
-            const warning = document.getElementById('march-warning');
-            if (currentMonthIdx === 2) {
-                warning.classList.remove('hidden');
-            } else {
-                warning.classList.add('hidden');
-            }
+            document.getElementById('march-warning').classList.toggle('hidden', currentMonthIdx !== 2);
 
-            const incomes = getIncomes();
-            const windowsData = getExpensesByWindow(currentMonthIdx);
-            let totalMonthlyExp = 0;
-            
-            const container = document.getElementById('windows-container');
-            container.innerHTML = '';
+            const incs = getIncomes();
+            const exps = getExpensesByWindow(currentMonthIdx);
+            let totalM = 0;
+            const cont = document.getElementById('windows-container');
+            cont.innerHTML = '';
 
-            incomes.forEach((income, idx) => {
+            incs.forEach((inc, idx) => {
                 const winIdx = idx + 1;
-                const windowExps = windowsData[winIdx];
-                const windowSpent = windowExps.reduce((acc, curr) => acc + curr.value, 0);
-                totalMonthlyExp += windowSpent;
+                const winExps = exps[winIdx];
+                const winSpent = winExps.reduce((a, b) => a + b.value, 0);
+                totalM += winSpent;
 
-                let windowHtml = `
-                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                let html = `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden animate-fade-month">
+                        <div class="p-4 bg-slate-50 flex justify-between items-center border-b">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-white shadow-sm rounded-xl flex items-center justify-center text-blue-600">
-                                    <i data-lucide="${winIdx % 2 === 0 ? 'user' : 'user-check'}" class="w-5 h-5"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-black text-slate-400 uppercase tracking-tighter">${income.details}</p>
-                                    <p class="font-bold text-slate-800 text-sm">${income.name}</p>
-                                </div>
+                                <div class="w-8 h-8 bg-white shadow-sm rounded-lg flex items-center justify-center text-blue-600 font-bold text-xs">${winIdx}</div>
+                                <div><p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">${inc.details}</p><p class="font-bold text-slate-800 text-sm">${inc.name}</p></div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-[10px] font-black text-slate-400 uppercase">Salário</p>
-                                <p class="font-black text-slate-900">R$ ${income.value.toFixed(2)}</p>
-                            </div>
+                            <p class="font-black text-slate-900 text-sm">R$ ${inc.value.toFixed(2)}</p>
                         </div>
-                        <div class="divide-y divide-slate-50">
-                `;
+                        <div class="divide-y divide-slate-50">`;
 
-                windowExps.forEach(exp => {
-                    const isPaid = paidItems[`${currentMonthIdx}-${exp.name}`];
-                    windowHtml += `
-                        <div class="p-4 flex justify-between items-center group transition ${isPaid ? 'paid-row' : 'hover:bg-slate-50/50'}">
-                            <div class="flex items-center gap-4">
-                                <button onclick="togglePaid(${currentMonthIdx}, '${exp.name}')" class="transition-transform active:scale-90">
-                                    <i data-lucide="${isPaid ? 'check-square' : 'square'}" class="w-6 h-6 ${isPaid ? 'text-emerald-500' : 'text-slate-300'}"></i>
-                                </button>
-                                <div>
-                                    <p class="text-sm font-bold text-slate-700 uppercase tracking-tight">${exp.name}</p>
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${exp.cat}</p>
-                                </div>
+                winExps.forEach(e => {
+                    const isP = paidItems[`${currentMonthIdx}-${e.name}`];
+                    html += `
+                        <div onclick="togglePaid(${currentMonthIdx}, '${e.name}')" class="p-4 flex justify-between items-center cursor-pointer transition ${isP ? 'paid-row' : 'hover:bg-slate-50/30'}">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="${isP ? 'check-circle' : 'circle'}" class="w-5 h-5 ${isP ? 'text-emerald-500' : 'text-slate-200'}"></i>
+                                <div><p class="text-xs font-bold text-slate-700 uppercase tracking-tight">${e.name}</p><p class="text-[9px] text-slate-400 font-bold uppercase">${e.cat}</p></div>
                             </div>
-                            <div class="text-right">
-                                <p class="font-black text-slate-900">R$ ${exp.value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                ${exp.value > 400 && !isPaid ? '<span class="text-[8px] bg-rose-50 text-rose-600 px-1 rounded font-bold uppercase">Valor Alto</span>' : ''}
-                            </div>
-                        </div>
-                    `;
+                            <p class="font-black text-slate-900 text-xs">R$ ${e.value.toFixed(2)}</p>
+                        </div>`;
                 });
-
-                if (windowExps.length === 0) {
-                    windowHtml += `<div class="p-8 text-center text-slate-300 text-xs font-bold uppercase tracking-widest">Sem contas nesta quinzena</div>`;
-                }
-
-                windowHtml += `
-                        <div class="p-3 bg-slate-50/30 flex justify-between items-center px-6">
-                             <p class="text-[10px] font-black text-slate-400 uppercase">Sobra da Quinzena</p>
-                             <p class="text-sm font-black ${income.value - windowSpent < 0 ? 'text-rose-600' : 'text-emerald-600'}">
-                                R$ ${(income.value - windowSpent).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                             </p>
+                
+                html += `</div>
+                        <div class="p-2 bg-slate-50/50 flex justify-between items-center px-6">
+                            <p class="text-[9px] font-black text-slate-300 uppercase">Sobra da Janela</p>
+                            <p class="text-xs font-black ${inc.value - winSpent < 0 ? 'text-rose-500' : 'text-emerald-500'}">R$ ${(inc.value - winSpent).toFixed(2)}</p>
                         </div>
-                    </div>
-                `;
-                container.innerHTML += windowHtml;
+                    </div>`;
+                cont.innerHTML += html;
             });
 
-            const totalIncome = 3077.34;
-            const balance = totalIncome - totalMonthlyExp;
-
+            const bal = 3077.34 - totalM;
             document.getElementById('current-month-display').innerText = months[currentMonthIdx];
-            document.getElementById('monthly-total-label').innerText = `R$ ${totalMonthlyExp.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            document.getElementById('monthly-balance-label').innerText = `R$ ${balance.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            document.getElementById('free-balance-card').innerText = balance.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('monthly-total-label').innerText = `R$ ${totalM.toFixed(2)}`;
+            document.getElementById('monthly-balance-label').innerText = `R$ ${bal.toFixed(2)}`;
+            document.getElementById('free-balance-card').innerText = bal.toFixed(2);
 
-            const health = document.getElementById('health-indicator');
-            if (balance > 1000) {
-                health.className = "inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase bg-emerald-500 text-white shadow-lg shadow-emerald-200";
-                health.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i> Folga Financeira';
-            } else if (balance > 500) {
-                health.className = "inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase bg-blue-500 text-white shadow-lg shadow-blue-200";
-                health.innerHTML = '<i data-lucide="info" class="w-3 h-3"></i> Sobrevivência Husky';
-            } else {
-                health.className = "inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase bg-amber-500 text-white shadow-lg shadow-amber-200";
-                health.innerHTML = '<i data-lucide="alert-circle" class="w-3 h-3"></i> Mês Crítico';
-            }
+            const statusTxt = document.getElementById('health-indicator-text');
+            if (bal > 1000) statusTxt.innerText = "Mês de folga! Ótimo momento para poupar ou um lazer extra.";
+            else if (bal > 500) statusTxt.innerText = "Orçamento equilibrado. Dá para cobrir a ração e a feira com calma.";
+            else statusTxt.innerText = "Atenção redobrada! Orçamento apertado devido às parcelas fixas.";
 
+            renderRelief();
             lucide.createIcons();
-        }
+        };
 
-        window.onload = render;
+        const renderRelief = () => {
+            const rel = [
+                { m: 2, t: "Quitação BS", d: "R$ 413,00 livre", c: "blue" },
+                { m: 4, t: "Casa Pio (158)", d: "Fim das 3 parcelas", c: "emerald" },
+                { m: 5, t: "Móveis e Sapatos", d: "Fim de R$ 316,90/mês", c: "amber" },
+                { m: 8, t: "Óculos", d: "Últimos R$ 200,00", c: "purple" }
+            ];
+            const timeline = document.getElementById('relief-timeline');
+            timeline.innerHTML = '';
+            rel.forEach(r => {
+                const passed = currentMonthIdx > r.m;
+                timeline.innerHTML += `
+                    <div class="flex gap-4 ${passed ? 'opacity-30' : ''}">
+                        <div class="flex flex-col items-center">
+                            <div class="w-8 h-8 rounded-full bg-${r.c}-100 text-${r.c}-600 flex items-center justify-center text-[10px] font-black">${months[r.m].substring(0,3).toUpperCase()}</div>
+                            <div class="w-0.5 h-full bg-slate-100 mt-2"></div>
+                        </div>
+                        <div class="pb-2">
+                            <p class="text-xs font-black text-slate-800 uppercase flex items-center gap-1">
+                                ${r.t} ${passed ? '<i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>' : ''}
+                            </p>
+                            <p class="text-[10px] text-slate-500 font-medium">${r.d}</p>
+                        </div>
+                    </div>`;
+            });
+        };
     </script>
 </body>
 </html>
