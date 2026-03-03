@@ -43,6 +43,8 @@
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
         <p class="text-slate-500 font-bold text-sm animate-pulse">Sincronizando com a Nuvem...</p>
+        <p id="error-msg" class="text-rose-500 text-[10px] mt-4 font-bold uppercase hidden">Erro: Verifique as Regras do Firestore</p>
+        <button id="force-open" class="mt-8 text-[10px] text-blue-500 underline hidden" onclick="hideLoader()">Entrar mesmo assim (Offline)</button>
     </div>
 
     <div class="max-w-6xl mx-auto p-4 md:p-8">
@@ -64,7 +66,6 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Coluna Principal -->
             <div class="lg:col-span-2 space-y-6" id="main-content-area">
                 
                 <!-- Resumo -->
@@ -72,7 +73,7 @@
                     <div>
                         <h2 class="text-2xl font-black text-slate-800" id="current-month-display">Março</h2>
                         <div id="sync-badge" class="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-400 uppercase">
-                            <i data-lucide="cloud-off" class="w-3 h-3"></i> Desconectado
+                            <i data-lucide="cloud-off" class="w-3 h-3"></i> Conectando...
                         </div>
                     </div>
                     <div class="flex gap-4">
@@ -135,7 +136,7 @@
                         Linha do Tempo de Alívio
                     </h3>
                     <div class="space-y-6" id="relief-timeline">
-                        <!-- Gerado via JS para marcar o que já passou -->
+                        <!-- Gerado via JS -->
                     </div>
                 </div>
             </div>
@@ -148,7 +149,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO FIREBASE (SUBSTITUA PELO SEU OBJETO DO CONSOLE)
         const firebaseConfig = {
             apiKey: "AIzaSyAOq-ucyKVgebl9dmBLHDXSL47rUIKjcUA",
             authDomain: "financas-9e802.firebaseapp.com",
@@ -158,42 +158,59 @@
             appId: "1:1010572219115:web:b5b8b6a68e05731b3b64ae"
         };
 
-
-        // Fallback para ambiente de desenvolvimento (Canvas)
-        const activeConfig = (firebaseConfig.apiKey === "") ? JSON.parse(__firebase_config) : firebaseConfig;
-        const app = initializeApp(activeConfig);
+        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // Identificador único para o seu documento no banco
+        const storageId = "planejamento_luis_leticia_2026";
 
         const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         let currentMonthIdx = 2; 
         let paidItems = {}; 
 
+        window.hideLoader = () => {
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.classList.add('hidden'), 500);
+            render();
+        };
+
+        // Segurança: Se em 5 segundos não carregar, libera o botão de força
+        setTimeout(() => {
+            const btn = document.getElementById('force-open');
+            if (btn) btn.classList.remove('hidden');
+        }, 5000);
+
         // Inicializar Auth
-        signInAnonymously(auth).catch(e => console.error("Erro Auth:", e));
+        signInAnonymously(auth).catch(e => {
+            console.error("Erro Auth:", e);
+            hideLoader();
+        });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Escuta mudanças em tempo real no banco
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pagamentos_v1');
+                // Caminho absoluto para evitar problemas de permissão de subcoleção
+                const docRef = doc(db, 'financas_publicas', storageId);
+                
                 onSnapshot(docRef, (docSnap) => {
                     if (docSnap.exists()) {
                         paidItems = docSnap.data().items || {};
                     }
                     updateSyncBadge(true);
-                    document.getElementById('loader').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
-                    render();
+                    hideLoader();
                 }, (err) => {
-                    console.error("Erro Sync:", err);
+                    console.error("Erro Crítico Firestore:", err);
+                    document.getElementById('error-msg').classList.remove('hidden');
                     updateSyncBadge(false);
+                    // Não damos hideLoader aqui para você ver o erro, a menos que clique no botão de força
                 });
             }
         });
 
         const updateSyncBadge = (online) => {
             const badge = document.getElementById('sync-badge');
+            if(!badge) return;
             badge.innerHTML = online ? '<i data-lucide="cloud" class="w-3 h-3"></i> Sincronizado' : '<i data-lucide="cloud-off" class="w-3 h-3"></i> Offline';
             badge.className = online ? 'mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-600 uppercase' : 'mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-50 text-[10px] font-bold text-rose-600 uppercase';
             lucide.createIcons();
@@ -202,13 +219,10 @@
         window.togglePaid = async (monthIdx, itemName) => {
             const key = `${monthIdx}-${itemName}`;
             const newStatus = !paidItems[key];
-            
-            // Atualiza localmente para feedback instantâneo
             paidItems[key] = newStatus;
             render();
 
-            // Salva na nuvem
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pagamentos_v1');
+            const docRef = doc(db, 'financas_publicas', storageId);
             try {
                 await setDoc(docRef, { items: paidItems }, { merge: true });
             } catch (e) {
@@ -248,6 +262,7 @@
 
         const render = () => {
             const sel = document.getElementById('month-selector');
+            if(!sel) return;
             sel.innerHTML = '';
             for (let i = 2; i < 12; i++) {
                 const b = document.createElement('button');
@@ -257,12 +272,14 @@
                 sel.appendChild(b);
             }
 
-            document.getElementById('march-warning').classList.toggle('hidden', currentMonthIdx !== 2);
+            const marchWarning = document.getElementById('march-warning');
+            if(marchWarning) marchWarning.classList.toggle('hidden', currentMonthIdx !== 2);
 
             const incs = getIncomes();
             const exps = getExpensesByWindow(currentMonthIdx);
             let totalM = 0;
             const cont = document.getElementById('windows-container');
+            if(!cont) return;
             cont.innerHTML = '';
 
             incs.forEach((inc, idx) => {
@@ -272,7 +289,7 @@
                 totalM += winSpent;
 
                 let html = `
-                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden animate-fade-month">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden animate-fade-month mb-4">
                         <div class="p-4 bg-slate-50 flex justify-between items-center border-b">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 bg-white shadow-sm rounded-lg flex items-center justify-center text-blue-600 font-bold text-xs">${winIdx}</div>
@@ -326,6 +343,7 @@
                 { m: 8, t: "Óculos", d: "Últimos R$ 200,00", c: "purple" }
             ];
             const timeline = document.getElementById('relief-timeline');
+            if(!timeline) return;
             timeline.innerHTML = '';
             rel.forEach(r => {
                 const passed = currentMonthIdx > r.m;
