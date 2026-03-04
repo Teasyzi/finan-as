@@ -1,14 +1,24 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Meta-tags para funcionar como Aplicação -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Finanças 2026">
+    <meta name="theme-color" content="#0b1120">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584026.png">
+    
     <title>Planejamento 2026 - Luis & Letícia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
+        /* Configuração de Cores Premium Dark */
         :root {
             --bg-app: #0b1120;
             --bg-card: #1e293b;
@@ -17,7 +27,7 @@
             --text-muted: #94a3b8;
             --border-ui: #334155;
             --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.5);
+            --accent-glow: rgba(59, 130, 246, 0.4);
         }
 
         body { 
@@ -27,37 +37,54 @@
             margin: 0;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
+            /* Evita scroll elástico no iOS para parecer uma app nativa */
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
-        /* Melhorias de Scroll Mobile */
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .scroll-container {
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
-        /* Ajustes de Container para Desktop vs Mobile */
         .main-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .card-custom { 
             background-color: var(--bg-card); 
             border: 1px solid var(--border-ui); 
-            border-radius: 1.25rem;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            border-radius: 1.5rem;
+            transition: all 0.2s ease;
         }
 
         .sub-section {
             background-color: var(--bg-sub);
         }
 
-        /* Botões de Mês - Estilo Carrossel Mobile */
+        /* Seletor de Meses Estilo App Navigation */
+        .month-nav {
+            display: flex;
+            overflow-x: auto;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            scroll-snap-type: x mandatory;
+        }
+        
+        .month-nav::-webkit-scrollbar { display: none; }
+
         .month-btn { 
             background-color: var(--bg-card); 
             border: 1px solid var(--border-ui); 
             color: var(--text-muted); 
             font-weight: 700;
-            min-width: 80px;
-            text-align: center;
+            min-width: 90px;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            scroll-snap-align: center;
             flex-shrink: 0;
         }
         
@@ -65,166 +92,167 @@
             background-color: var(--accent) !important; 
             color: white !important; 
             border-color: var(--accent) !important;
-            box-shadow: 0 0 15px var(--accent-glow);
+            box-shadow: 0 4px 15px var(--accent-glow);
         }
 
-        /* Estilo de Linha Paga */
+        /* Linha de Despesa Paga */
         .paid-row { 
             opacity: 0.3; 
-            filter: grayscale(0.8);
+            filter: grayscale(1);
             transform: scale(0.98);
         }
         
         .paid-row p { text-decoration: line-through; }
 
-        /* Animações */
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(15px); }
+        /* Animações de Transição */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-content { animation: slideIn 0.4s ease-out forwards; }
+        .animate-app { animation: fadeInUp 0.5s ease-out forwards; }
 
-        /* Loader Overlay */
+        /* Estilo da Checkbox */
+        .check-box {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 0.5rem;
+            border: 2px solid var(--border-ui);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .check-box.checked {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+
+        /* Loader Nativo */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-app); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 1000;
         }
-
-        /* Checkbox Custom */
-        .checkbox-tap {
-            width: 2.5rem;
-            height: 2.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Desktop Layout Fixes */
-        @media (min-width: 1024px) {
-            .desktop-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1.5rem;
-            }
-        }
     </style>
 </head>
-<body class="min-h-screen pb-10">
+<body>
     
-    <!-- Loader -->
+    <!-- Ecrã de Carregamento -->
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-        <p class="text-slate-400 font-bold text-sm">Sincronizando Banco de Dados...</p>
+        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">A carregar aplicação...</p>
     </div>
 
-    <div class="main-container px-4 md:px-8 pt-6 md:pt-10">
-        
-        <!-- Header: Mobile Otimizado -->
-        <header class="flex flex-col gap-6 mb-8">
-            <div class="flex justify-between items-center">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <i data-lucide="trending-up" class="text-blue-500 w-6 h-6 md:w-8 md:h-8"></i>
-                        <h1 class="text-xl md:text-3xl font-extrabold tracking-tight">Finanças 2026</h1>
+    <div class="scroll-container">
+        <div class="main-container p-5 md:p-10 pb-24">
+            
+            <!-- Barra de Topo Nativa -->
+            <header class="flex flex-col gap-6 mb-8 animate-app">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2">
+                            <i data-lucide="wallet" class="text-blue-500"></i>
+                            Finanças 2026
+                        </h1>
+                        <div id="status-cloud" class="flex items-center gap-1.5 mt-1">
+                            <div class="w-2 h-2 rounded-full bg-slate-600" id="dot"></div>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">A ligar...</span>
+                        </div>
                     </div>
-                    <p class="text-slate-500 text-xs md:text-sm font-medium">Luis & Letícia • Controle em Tempo Real</p>
+                    <!-- Avatar/Identificador -->
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-lg border-2 border-white/10">
+                        L&L
+                    </div>
                 </div>
                 
-                <!-- Status da Nuvem -->
-                <div id="sync-status" class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    <div class="w-2 h-2 rounded-full bg-slate-600" id="sync-dot"></div>
-                    <span id="sync-text">Offline</span>
+                <!-- Navegação de Meses -->
+                <div class="month-nav" id="month-nav">
+                    <!-- Injetado via JS -->
                 </div>
-            </div>
-            
-            <!-- Seletor de Meses: Carrossel com Snap -->
-            <div class="flex overflow-x-auto hide-scrollbar gap-2 snap-x" id="month-selector">
-                <!-- Injetado por JS -->
-            </div>
-        </header>
+            </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            <!-- Coluna Principal (Resumo + Quinzenas) -->
-            <div class="lg:col-span-8 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                <!-- Card de Resumo Financeiro -->
-                <div class="card-custom p-6 md:p-8 flex flex-col sm:flex-row justify-between items-center gap-6">
-                    <div class="text-center sm:text-left">
-                        <h2 class="text-2xl md:text-3xl font-black mb-1 text-blue-400" id="month-name-display">Março</h2>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Resumo do Período</p>
-                    </div>
+                <!-- Área Principal -->
+                <div class="lg:col-span-8 space-y-6">
                     
-                    <div class="grid grid-cols-2 gap-8 w-full sm:w-auto border-t sm:border-t-0 sm:border-l border-slate-700 pt-6 sm:pt-0 sm:pl-8">
-                        <div>
-                            <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Saídas</p>
-                            <p class="text-xl font-black text-rose-500" id="total-spent">R$ 0,00</p>
+                    <!-- Card de Resumo -->
+                    <div class="card-custom p-6 md:p-8 flex flex-col sm:flex-row justify-between items-center gap-6 animate-app">
+                        <div class="text-center sm:text-left">
+                            <h2 class="text-3xl font-black text-blue-400" id="display-month">Março</h2>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Balanço Mensal</p>
                         </div>
-                        <div>
-                            <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Sobra</p>
-                            <p class="text-xl font-black text-emerald-500" id="total-left">R$ 0,00</p>
+                        
+                        <div class="flex gap-10 border-t sm:border-t-0 sm:border-l border-slate-700 pt-6 sm:pt-0 sm:pl-10 w-full sm:w-auto justify-around">
+                            <div>
+                                <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Gastos</p>
+                                <p class="text-xl font-black text-rose-500" id="label-spent">R$ 0,00</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Livre</p>
+                                <p class="text-xl font-black text-emerald-500" id="label-free">R$ 0,00</p>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Alerta Março -->
+                    <div id="alert-box" class="hidden animate-app">
+                        <div class="bg-amber-900/10 border border-amber-900/30 rounded-2xl p-6 flex items-center gap-5">
+                            <div class="w-12 h-12 bg-amber-900/30 rounded-full flex items-center justify-center text-amber-500 shrink-0">
+                                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-sm text-amber-200/80">
+                                <span class="font-bold text-amber-400 block mb-1 uppercase text-xs tracking-wider">Atenção: Reserva Abril</span>
+                                Separe <b>R$ 172,05</b> deste mês para cobrir a primeira quinzena de Abril.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Quinzenas -->
+                    <div id="quinzenas-list" class="space-y-6">
+                        <!-- Conteúdo dinâmico -->
                     </div>
                 </div>
 
-                <!-- Alerta Estratégico (Somente Março) -->
-                <div id="march-alert" class="hidden animate-content">
-                    <div class="bg-amber-900/10 border border-amber-900/30 rounded-2xl p-5 flex items-center gap-4">
-                        <div class="p-3 bg-amber-900/30 rounded-xl text-amber-500">
-                            <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                <!-- Barra Lateral -->
+                <aside class="lg:col-span-4 space-y-6 animate-app">
+                    <!-- Card Compras -->
+                    <div class="card-custom bg-gradient-to-br from-slate-900 to-blue-950 p-8 relative overflow-hidden border-white/5">
+                        <i data-lucide="dog" class="absolute -right-6 -bottom-6 w-32 h-32 opacity-10 rotate-12 text-white"></i>
+                        <div class="relative z-10">
+                            <h3 class="text-blue-400 font-black uppercase text-[10px] tracking-widest mb-4">Feira e Pets</h3>
+                            <div class="flex items-baseline gap-1 mb-2">
+                                <span class="text-sm font-bold text-slate-500 uppercase tracking-tighter">R$</span>
+                                <span class="text-5xl font-black text-emerald-400" id="pets-val">0,00</span>
+                            </div>
+                            <p id="health-msg" class="text-slate-400 text-xs font-medium italic">
+                                A calcular saúde financeira...
+                            </p>
                         </div>
-                        <p class="text-sm text-amber-200/80 leading-snug">
-                            <span class="font-bold block text-amber-400">Reserva de Abril</span>
-                            Guarde <b>R$ 172,05</b> agora para cobrir a primeira quinzena do próximo mês.
-                        </p>
                     </div>
-                </div>
 
-                <!-- Container das Janelas (Ajustado para Grid em Desktop) -->
-                <div id="windows-container" class="desktop-grid space-y-6 md:space-y-0">
-                    <!-- Cards via JS -->
-                </div>
-            </div>
-
-            <!-- Coluna Lateral (Pets + Timeline) -->
-            <aside class="lg:col-span-4 space-y-6">
-                <!-- Card de Compras (Destaque Visual) -->
-                <div class="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden">
-                    <i data-lucide="shopping-cart" class="absolute -right-6 -bottom-6 w-32 h-32 opacity-10 rotate-12"></i>
-                    <div class="relative z-10">
-                        <h3 class="text-blue-200 font-bold uppercase text-[10px] tracking-widest mb-4 flex items-center gap-2">
-                            <i data-lucide="dog" class="w-4 h-4"></i> Ração e Compras
+                    <!-- Timeline -->
+                    <div class="card-custom p-6">
+                        <h3 class="font-bold mb-6 text-xs uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                            <i data-lucide="target" class="w-4 h-4 text-blue-500"></i>
+                            Próximos Alívios
                         </h3>
-                        <div class="flex items-baseline gap-1 mb-2">
-                            <span class="text-lg font-bold opacity-60">R$</span>
-                            <span class="text-5xl font-black" id="free-for-pets">0,00</span>
+                        <div class="space-y-8" id="timeline-list">
+                            <!-- Gerado via JS -->
                         </div>
-                        <p id="health-text" class="text-blue-100/70 text-xs font-medium leading-relaxed">
-                            Aguardando cálculos...
-                        </p>
                     </div>
-                </div>
-
-                <!-- Timeline de Alívio (Design Enxuto) -->
-                <div class="card-custom p-6">
-                    <h3 class="font-bold mb-6 text-sm uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                        <i data-lucide="calendar" class="w-4 h-4"></i> Próximos Passos
-                    </h3>
-                    <div class="space-y-6" id="timeline-list">
-                        <!-- Itens Timeline -->
-                    </div>
-                </div>
-            </aside>
+                </aside>
+            </div>
         </div>
     </div>
 
-    <!-- Scripting & Firebase -->
+    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuração Firebase (Luis & Letícia)
         const firebaseConfig = {
             apiKey: "AIzaSyAOq-ucyKVgebl9dmBLHDXSL47rUIKjcUA",
             authDomain: "financas-9e802.firebaseapp.com",
@@ -237,199 +265,192 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storageId = "planejamento_v2_2026";
+        const docId = "planejamento_app_v1_2026";
 
         const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        let currentMonthIdx = 2; // Março default
-        let paidData = {};
+        let currentIdx = 2; // Começa em Março
+        let cloudData = {};
 
-        // --- UX: Esconder Loader ---
+        // --- Gestão de App ---
         window.hideLoader = () => {
-            document.getElementById('loader').style.opacity = '0';
-            setTimeout(() => document.getElementById('loader').classList.add('hidden'), 400);
+            const l = document.getElementById('loader');
+            l.style.opacity = '0';
+            setTimeout(() => l.classList.add('hidden'), 500);
             render();
         };
 
-        // --- Firebase: Sincronização ---
+        // --- Firebase Sync ---
         signInAnonymously(auth).catch(() => hideLoader());
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const docRef = doc(db, 'financas_publicas', storageId);
-                onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) paidData = docSnap.data().items || {};
-                    updateSyncIndicator(true);
+                const docRef = doc(db, 'financas_publicas', docId);
+                onSnapshot(docRef, (snap) => {
+                    if (snap.exists()) cloudData = snap.data().items || {};
+                    updateCloudStatus(true);
                     hideLoader();
                 }, () => {
-                    updateSyncIndicator(false);
+                    updateCloudStatus(false);
                     hideLoader();
                 });
             }
         });
 
-        const updateSyncIndicator = (online) => {
-            const dot = document.getElementById('sync-dot');
-            const text = document.getElementById('sync-text');
-            dot.className = `w-2 h-2 rounded-full ${online ? 'bg-emerald-500' : 'bg-rose-500'}`;
-            text.innerText = online ? 'Sincronizado' : 'Offline';
-            text.className = online ? 'text-emerald-500' : 'text-rose-500';
+        const updateCloudStatus = (ok) => {
+            const dot = document.getElementById('dot');
+            const txt = document.getElementById('status-text');
+            dot.className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-500'}`;
+            txt.innerText = ok ? 'Sincronizado' : 'Offline';
+            txt.className = `text-[10px] font-bold uppercase tracking-widest ${ok ? 'text-emerald-500' : 'text-rose-500'}`;
         };
 
-        // --- Lógica de Negócio: Dados ---
-        const getFinancialStructure = (m) => {
-            const struct = { 
+        // --- Lógica Financeira ---
+        const getWindows = (m) => {
+            const data = { 
                 incomes: [
-                    { id: 1, name: "Letícia (1ª Q)", val: 830, day: "5º Dia Útil" },
-                    { id: 2, name: "Luis (1ª Q)", val: 887.77, day: "Dia 15" },
-                    { id: 3, name: "Letícia (2ª Q)", val: 648.40, day: "Dia 20" },
-                    { id: 4, name: "Luis (2ª Q)", val: 711.17, day: "Último Útil" }
+                    { name: "Letícia (1ª Q)", val: 830, details: "5º Dia Útil" },
+                    { name: "Luis (1ª Q)", val: 887.77, details: "Dia 15" },
+                    { name: "Letícia (2ª Q)", val: 648.40, details: "Dia 20" },
+                    { name: "Luis (2ª Q)", val: 711.17, details: "Último Útil" }
                 ],
                 windows: { 1: [], 2: [], 3: [], 4: [] }
             };
 
-            // Window 1
-            struct.windows[1].push({ name: "Youcine", val: 17, cat: "Fixa" }, { name: "Internet", val: 100, cat: "Fixa" }, { name: "Nubank", val: 16, cat: "Variável" });
-            if (m === 2) struct.windows[1].push({ name: "Energia (Jan)", val: 294, cat: "Atraso" });
-            if (m <= 4) struct.windows[1].push({ name: "Casa Pio 1", val: 158, cat: "Parcela" });
-            if (m >= 3) struct.windows[1].push({ name: "Geladeira", val: 562.39, cat: "Equip" }, { name: "Armário", val: 148.66, cat: "Equip" });
+            // Regras de Despesas
+            data.windows[1].push({ n: "Youcine", v: 17, c: "Fixa" }, { n: "Internet", v: 100, c: "Fixa" }, { n: "Nubank", v: 16, c: "Cartão" });
+            if (m === 2) data.windows[1].push({ n: "Energia (Jan)", v: 294, c: "Atraso" });
+            if (m <= 4) data.windows[1].push({ n: "Casa Pio 1", v: 158, c: "Parcela" });
+            if (m >= 3) data.windows[1].push({ n: "Geladeira", v: 562.39, c: "Parcela" }, { n: "Armário", v: 148.66, c: "Parcela" });
 
-            // Window 2
-            struct.windows[2].push({ name: "Vilany", val: 550.66, cat: "Fixa" }, { name: "Irmão", val: 30, cat: "Parcela" });
+            data.windows[2].push({ n: "Vilany", v: 550.66, c: "Fixa" }, { n: "Irmão", v: 30, c: "Parcela" });
 
-            // Window 3
-            if (m <= 5) struct.windows[3].push({ name: "Guarda-roupa", val: 223, cat: "Equip" }, { name: "Casa Pio 2", val: 93.9, cat: "Parcela" });
+            if (m <= 5) data.windows[3].push({ n: "Guarda-roupa", v: 223, c: "Parcela" }, { n: "Casa Pio 2", v: 93.9, c: "Parcela" });
 
-            // Window 4
-            struct.windows[4].push({ name: "Energia", val: 340, cat: "Consumo" });
-            if (m === 2) struct.windows[4].push({ name: "BS Quitação", val: 413, cat: "FIM!" });
-            if (m <= 8) struct.windows[4].push({ name: "Óculos", val: 200, cat: "Saúde" });
+            data.windows[4].push({ n: "Energia", v: 340, c: "Consumo" });
+            if (m === 2) data.windows[4].push({ n: "BS (QUITAÇÃO)", v: 413, c: "FIM!" });
+            if (m <= 8) data.windows[4].push({ n: "Óculos", v: 200, c: "Parcela" });
 
-            return struct;
+            return data;
         };
 
-        // --- Interação: Salvar ---
-        window.togglePaid = async (monthIdx, name) => {
-            const key = `${monthIdx}-${name}`;
-            paidData[key] = !paidData[key];
+        window.toggleItem = async (m, name) => {
+            const key = `${m}-${name}`;
+            cloudData[key] = !cloudData[key];
             render();
             try {
-                await setDoc(doc(db, 'financas_publicas', storageId), { items: paidData }, { merge: true });
+                await setDoc(doc(db, 'financas_publicas', docId), { items: cloudData }, { merge: true });
             } catch (e) { console.error(e); }
         };
 
-        window.setMonth = (idx) => {
-            currentMonthIdx = idx;
+        window.changeMonth = (i) => {
+            currentIdx = i;
             render();
         };
 
-        // --- Renderização ---
+        // --- Renderização App ---
         const render = () => {
-            const data = getFinancialStructure(currentMonthIdx);
+            const data = getWindows(currentIdx);
             
-            // Render Seletor
-            const selector = document.getElementById('month-selector');
-            selector.innerHTML = months.slice(2).map((m, i) => {
+            // Nav Meses
+            const nav = document.getElementById('month-nav');
+            nav.innerHTML = months.slice(2).map((m, i) => {
                 const idx = i + 2;
-                return `<button onclick="setMonth(${idx})" class="month-btn px-6 py-2.5 rounded-xl text-xs uppercase tracking-tighter snap-center ${currentMonthIdx === idx ? 'active' : ''}">${m.substring(0,3)}</button>`;
+                return `<button onclick="changeMonth(${idx})" class="month-btn ${currentIdx === idx ? 'active' : ''}">${m.substring(0,3).toUpperCase()}</button>`;
             }).join('');
 
-            // Alerta Março
-            document.getElementById('march-alert').classList.toggle('hidden', currentMonthIdx !== 2);
+            // Alerta Estratégico
+            document.getElementById('alert-box').classList.toggle('hidden', currentIdx !== 2);
 
-            // Render Windows
-            const container = document.getElementById('windows-container');
-            container.innerHTML = '';
+            // Lista de Quinzenas
+            const list = document.getElementById('quinzenas-list');
+            list.innerHTML = '';
             let totalSpent = 0;
 
             data.incomes.forEach((inc, i) => {
                 const wIdx = i + 1;
                 const items = data.windows[wIdx];
-                const windowSpent = items.reduce((acc, cur) => acc + cur.val, 0);
+                const windowSpent = items.reduce((acc, curr) => acc + curr.v, 0);
                 totalSpent += windowSpent;
 
                 let itemsHtml = items.map(item => {
-                    const isPaid = paidData[`${currentMonthIdx}-${item.name}`];
+                    const isPaid = cloudData[`${currentIdx}-${item.n}`];
                     return `
-                        <div onclick="togglePaid(${currentMonthIdx}, '${item.name}')" class="flex items-center justify-between p-4 cursor-pointer transition-all border-b border-slate-700/30 ${isPaid ? 'paid-row' : 'hover:bg-slate-800/40'}">
+                        <div onclick="toggleItem(${currentIdx}, '${item.n}')" class="flex items-center justify-between p-4 border-b border-slate-700/40 cursor-pointer active:bg-slate-700/20 transition-all ${isPaid ? 'paid-row' : ''}">
                             <div class="flex items-center gap-4">
-                                <div class="checkbox-tap">
-                                    <div class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${isPaid ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'}">
-                                        ${isPaid ? '<i data-lucide="check" class="text-white w-4 h-4"></i>' : ''}
-                                    </div>
+                                <div class="check-box ${isPaid ? 'checked' : ''}">
+                                    ${isPaid ? '<i data-lucide="check" class="text-white w-3.5 h-3.5"></i>' : ''}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold text-slate-200">${item.name}</p>
-                                    <span class="text-[9px] uppercase tracking-widest text-slate-500 font-bold">${item.cat}</span>
+                                    <p class="text-sm font-bold text-slate-100">${item.n}</p>
+                                    <span class="text-[9px] uppercase tracking-widest text-slate-500 font-black">${item.c}</span>
                                 </div>
                             </div>
-                            <p class="font-black text-sm text-slate-100">R$ ${item.val.toLocaleString('pt-BR', {minimumFractionDigits:2})}</p>
+                            <p class="font-black text-sm text-slate-200">R$ ${item.v.toLocaleString('pt-PT', {minimumFractionDigits:2})}</p>
                         </div>
                     `;
                 }).join('');
 
-                container.innerHTML += `
-                    <div class="card-custom overflow-hidden flex flex-col h-full animate-content">
-                        <div class="p-5 sub-section flex justify-between items-start border-b border-slate-700">
-                            <div class="flex gap-3">
-                                <div class="w-10 h-10 card-custom flex items-center justify-center text-blue-400 font-extrabold text-sm">${wIdx}</div>
+                list.innerHTML += `
+                    <div class="card-custom overflow-hidden animate-app">
+                        <div class="p-5 sub-section flex justify-between items-center border-b border-slate-700">
+                            <div class="flex gap-3 items-center">
+                                <div class="w-10 h-10 card-custom bg-slate-800 flex items-center justify-center text-blue-400 font-black text-sm">${wIdx}</div>
                                 <div>
-                                    <p class="text-[10px] text-slate-500 font-black uppercase leading-none mb-1">${inc.day}</p>
-                                    <p class="font-bold text-sm tracking-tight">${inc.name}</p>
+                                    <p class="text-[9px] text-slate-500 font-black uppercase tracking-tighter mb-0.5">${inc.details}</p>
+                                    <p class="font-bold text-sm tracking-tight text-white">${inc.name}</p>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm font-black">R$ ${inc.val.toFixed(2)}</p>
-                            </div>
+                            <p class="font-black text-sm text-white">R$ ${inc.val.toFixed(2)}</p>
                         </div>
-                        <div class="flex-1">${itemsHtml || '<p class="p-10 text-center text-xs text-slate-600 font-bold uppercase tracking-widest">Sem boletos</p>'}</div>
-                        <div class="p-4 sub-section flex justify-between items-center border-t border-slate-700">
-                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sobra</span>
+                        <div class="min-h-[60px]">${itemsHtml || '<p class="p-8 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">Sem despesas</p>'}</div>
+                        <div class="p-4 sub-section flex justify-between items-center border-t border-slate-700 px-6">
+                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sobra Salário</span>
                             <span class="text-sm font-black ${inc.val - windowSpent < 0 ? 'text-rose-500' : 'text-emerald-500'}">
-                                R$ ${(inc.val - windowSpent).toLocaleString('pt-BR', {minimumFractionDigits:2})}
+                                R$ ${(inc.val - windowSpent).toLocaleString('pt-PT', {minimumFractionDigits:2})}
                             </span>
                         </div>
                     </div>
                 `;
             });
 
-            // Resumo Superior
-            const incomeTotal = 3077.34;
-            const balance = incomeTotal - totalSpent;
-            document.getElementById('total-spent').innerText = `R$ ${totalSpent.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-            document.getElementById('total-left').innerText = `R$ ${balance.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-            document.getElementById('free-for-pets').innerText = `${balance.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-            document.getElementById('month-name-display').innerText = months[currentMonthIdx];
+            // Balanço Final
+            const totalIncome = 3077.34;
+            const balance = totalIncome - totalSpent;
+            document.getElementById('label-spent').innerText = `R$ ${totalSpent.toLocaleString('pt-PT', {minimumFractionDigits:2})}`;
+            document.getElementById('label-free').innerText = `R$ ${balance.toLocaleString('pt-PT', {minimumFractionDigits:2})}`;
+            document.getElementById('pets-val').innerText = `${balance.toLocaleString('pt-PT', {minimumFractionDigits:2})}`;
+            document.getElementById('display-month').innerText = months[currentIdx];
 
-            const hText = document.getElementById('health-text');
-            if (balance > 1000) hText.innerText = "Orçamento com folga. Momento ideal para poupar ou lazer.";
-            else if (balance > 500) hText.innerText = "Equilíbrio positivo. Use com sabedoria na feira.";
-            else hText.innerText = "Atenção: Mês muito apertado. Foco total no essencial.";
+            const msg = document.getElementById('health-msg');
+            if (balance > 1000) msg.innerText = "Excelente! Mês com margem para poupança ou extras.";
+            else if (balance > 500) msg.innerText = "Equilibrado. Saldo disponível para feira e despesas pet.";
+            else msg.innerText = "Atenção: Orçamento muito justo. Prioridade ao essencial.";
 
             renderTimeline();
             lucide.createIcons();
         };
 
         const renderTimeline = () => {
-            const milestones = [
-                { m: 2, t: "Quitação BS", d: "R$ 413,00 de fôlego", c: "blue" },
-                { m: 4, t: "Casa Pio (158)", d: "Fim das parcelas", c: "emerald" },
-                { m: 5, t: "Parcelas Diversas", d: "R$ 316,00 liberados", c: "amber" },
-                { m: 8, t: "Óculos", d: "Última de R$ 200,00", c: "purple" }
+            const events = [
+                { m: 2, t: "Fim BS Quitação", d: "R$ 413 livres", c: "blue" },
+                { m: 4, t: "Fim Casa Pio", d: "Parcela de 158 liquidada", c: "emerald" },
+                { m: 5, t: "Fim Móveis", d: "Alívio de R$ 316 mensais", c: "amber" },
+                { m: 8, t: "Fim Óculos", d: "Libertação de R$ 200", c: "purple" }
             ];
-            const list = document.getElementById('timeline-list');
-            list.innerHTML = milestones.map(ms => {
-                const passed = currentMonthIdx > ms.m;
+            const timeline = document.getElementById('timeline-list');
+            timeline.innerHTML = events.map(ev => {
+                const done = currentIdx > ev.m;
                 return `
-                    <div class="flex gap-4 ${passed ? 'opacity-20' : ''}">
+                    <div class="flex gap-5 ${done ? 'opacity-20' : ''}">
                         <div class="flex flex-col items-center">
-                            <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-${ms.c}-400">
-                                ${months[ms.m].substring(0,3).toUpperCase()}
+                            <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-${ev.c}-400">
+                                ${months[ev.m].substring(0,3).toUpperCase()}
                             </div>
                             <div class="w-px h-full bg-slate-800 mt-2"></div>
                         </div>
-                        <div class="pb-4">
-                            <p class="text-sm font-black uppercase tracking-tight ${passed ? 'line-through' : ''}">${ms.t}</p>
-                            <p class="text-[11px] text-slate-500 font-medium">${ms.d}</p>
+                        <div class="pb-6">
+                            <p class="text-sm font-black uppercase tracking-tight text-white mb-1 ${done ? 'line-through' : ''}">${ev.t}</p>
+                            <p class="text-[11px] text-slate-500 font-medium">${ev.d}</p>
                         </div>
                     </div>
                 `;
