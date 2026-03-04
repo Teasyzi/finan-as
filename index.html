@@ -110,9 +110,9 @@
         .animate-app { animation: fadeInUp 0.5s ease-out forwards; }
 
         .check-box {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 0.5rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 0.4rem;
             border: 2px solid var(--border-ui);
             display: flex;
             align-items: center;
@@ -134,26 +134,22 @@
 <body>
     
     <script>
-        // Registro do Service Worker para habilitar instalação nativa
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(() => console.log('Serviço de App Ativo'))
-                    .catch(err => console.log('Erro no App:', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
             });
         }
     </script>
 
-    <!-- Ecrã de Carregamento -->
+    <!-- Loader -->
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Sincronizando Dados...</p>
+        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Organizando Contas...</p>
     </div>
 
     <div class="scroll-container">
         <div class="main-container p-5 md:p-10 pb-24">
             
-            <!-- Barra de Topo Limpa -->
             <header class="flex flex-col gap-6 mb-8 animate-app">
                 <div class="flex justify-between items-center">
                     <div>
@@ -163,77 +159,71 @@
                         </h1>
                         <div id="status-cloud" class="flex items-center gap-1.5 mt-1">
                             <div class="w-2 h-2 rounded-full bg-slate-600" id="dot"></div>
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">A ligar...</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">Conectando...</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="month-nav" id="month-nav">
-                    <!-- Meses injetados via JS -->
-                </div>
+                <div class="month-nav" id="month-nav"></div>
             </header>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 <div class="lg:col-span-8 space-y-6">
+                    <!-- Dashboard Resumo -->
                     <div class="card-custom p-6 md:p-8 flex flex-col sm:flex-row justify-between items-center gap-6 animate-app">
                         <div class="text-center sm:text-left">
                             <h2 class="text-3xl font-black text-blue-400" id="display-month">Março</h2>
-                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Balanço Mensal</p>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Fluxo Organizado: Casa Pio na 1ª Quinzena</p>
                         </div>
                         
                         <div class="flex gap-10 border-t sm:border-t-0 sm:border-l border-slate-700 pt-6 sm:pt-0 sm:pl-10 w-full sm:w-auto justify-around">
                             <div>
-                                <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Gastos</p>
+                                <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Total Saídas</p>
                                 <p class="text-xl font-black text-rose-500" id="label-spent">R$ 0,00</p>
                             </div>
                             <div>
-                                <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Livre</p>
+                                <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Sobra Final</p>
                                 <p class="text-xl font-black text-emerald-500" id="label-free">R$ 0,00</p>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Alerta de Organização -->
                     <div id="alert-box" class="hidden animate-app">
-                        <div class="bg-amber-900/10 border border-amber-900/30 rounded-2xl p-6 flex items-center gap-5">
-                            <div class="w-12 h-12 bg-amber-900/30 rounded-full flex items-center justify-center text-amber-500 shrink-0">
-                                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                        <div class="bg-blue-900/10 border border-blue-900/30 rounded-2xl p-6 flex items-center gap-5">
+                            <div class="w-12 h-12 bg-blue-900/30 rounded-full flex items-center justify-center text-blue-400 shrink-0">
+                                <i data-lucide="check-circle" class="w-6 h-6"></i>
                             </div>
-                            <p class="text-sm text-amber-200/80">
-                                <span class="font-bold text-amber-400 block mb-1 uppercase text-xs tracking-wider">Reserva Abril</span>
-                                Separe <b>R$ 172,05</b> deste mês para cobrir a primeira quinzena de Abril.
+                            <p class="text-sm text-blue-200/80 leading-relaxed">
+                                <span class="font-bold text-blue-400 block mb-1 uppercase text-xs tracking-wider">Contas Reorganizadas</span>
+                                <b>Casa Pio 1</b> agora na primeira quinzena. Geladeira e Armário movidos para reserva de Abril (Window 4).
                             </p>
                         </div>
                     </div>
 
-                    <div id="quinzenas-list" class="space-y-6">
-                        <!-- Conteúdo JS -->
-                    </div>
+                    <div id="quinzenas-list" class="space-y-6"></div>
                 </div>
 
                 <aside class="lg:col-span-4 space-y-6 animate-app">
                     <div class="card-custom bg-gradient-to-br from-slate-900 to-blue-950 p-8 relative overflow-hidden border-white/5">
                         <i data-lucide="dog" class="absolute -right-8 -bottom-8 w-40 h-40 opacity-10 rotate-12 text-white"></i>
                         <div class="relative z-10">
-                            <h3 class="text-blue-400 font-black uppercase text-[10px] tracking-widest mb-4">Feira e Pets</h3>
+                            <h3 class="text-blue-400 font-black uppercase text-[10px] tracking-widest mb-4">Livre p/ Compras</h3>
                             <div class="flex items-baseline gap-1 mb-2">
                                 <span class="text-sm font-bold text-slate-500 uppercase tracking-tighter">R$</span>
                                 <span class="text-5xl font-black text-emerald-400" id="pets-val">0,00</span>
                             </div>
-                            <p id="health-msg" class="text-slate-400 text-xs font-medium italic">
-                                A calcular...
-                            </p>
+                            <p id="health-msg" class="text-slate-400 text-xs font-medium italic leading-relaxed"></p>
                         </div>
                     </div>
 
                     <div class="card-custom p-6">
                         <h3 class="font-bold mb-6 text-xs uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
-                            <i data-lucide="target" class="w-4 h-4 text-blue-500"></i>
-                            Próximos Alívios
+                            <i data-lucide="calendar" class="w-4 h-4 text-blue-500"></i>
+                            Metas de Alívio
                         </h3>
-                        <div class="space-y-8" id="timeline-list">
-                            <!-- JS -->
-                        </div>
+                        <div class="space-y-8" id="relief-timeline"></div>
                     </div>
                 </aside>
             </div>
@@ -258,7 +248,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const docId = "planejamento_app_final_2026";
+        const docId = "planejamento_final_v4_marzo";
 
         const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         let currentIdx = 2; 
@@ -266,10 +256,7 @@
 
         window.hideLoader = () => {
             const l = document.getElementById('loader');
-            if(l) {
-                l.style.opacity = '0';
-                setTimeout(() => l.classList.add('hidden'), 500);
-            }
+            if(l) { l.style.opacity = '0'; setTimeout(() => l.classList.add('hidden'), 500); }
             render();
         };
 
@@ -298,6 +285,7 @@
             txt.className = `text-[10px] font-bold uppercase tracking-widest ${ok ? 'text-emerald-500' : 'text-rose-500'}`;
         };
 
+        // --- MOTOR DE DADOS ORGANIZADO ---
         const getWindowsData = (m) => {
             const data = { 
                 incomes: [
@@ -308,15 +296,43 @@
                 ],
                 windows: { 1: [], 2: [], 3: [], 4: [] }
             };
-            data.windows[1].push({ n: "Youcine", v: 17, c: "Fixa" }, { n: "Internet", v: 100, c: "Fixa" }, { n: "Nubank", v: 16, c: "Cartão" });
-            if (m === 2) data.windows[1].push({ n: "Energia (Jan)", v: 294, c: "Atraso" });
-            if (m <= 4) data.windows[1].push({ n: "Casa Pio 1", v: 158, c: "Parcela" });
-            if (m >= 3) data.windows[1].push({ n: "Geladeira", v: 562.39, c: "Parcela" }, { n: "Armário", v: 148.66, c: "Parcela" });
-            data.windows[2].push({ n: "Vilany", v: 550.66, c: "Fixa" }, { n: "Irmão", v: 30, c: "Parcela" });
-            if (m <= 5) data.windows[3].push({ n: "Guarda-roupa", v: 223, c: "Parcela" }, { n: "Casa Pio 2", v: 93.9, c: "Parcela" });
-            data.windows[4].push({ n: "Energia", v: 340, c: "Consumo" });
+
+            // WINDOW 1 (Letícia) - Vencimentos Início do Mês
+            data.windows[1].push({ n: "Vilany", v: 550.66, c: "Fixa" });
+            data.windows[1].push({ n: "Casa Pio 1", v: 158, c: "Parcela" });
+            data.windows[1].push({ n: "Internet", v: 100, c: "Fixa" });
+            data.windows[1].push({ n: "Youcine", v: 17, c: "Fixa" });
+            
+            // WINDOW 2 (Luis) - Meio do Mês
+            if (m === 2) {
+                data.windows[2].push({ n: "Energia (Jan)", v: 294, c: "Atrasada" });
+                data.windows[2].push({ n: "Nubank", v: 16, c: "Fatura" }); // Nubank movido aqui em Março p/ aliviar a Window 1
+            } else {
+                data.windows[1].push({ n: "Nubank", v: 16, c: "Fatura" });
+            }
+            data.windows[2].push({ n: "Irmão", v: 30, c: "Parcela" });
+
+            // WINDOW 3 (Letícia) - Dia 20
+            if (m <= 5) {
+                data.windows[3].push({ n: "Guarda-roupa", v: 223, c: "Parcela" });
+                data.windows[3].push({ n: "Casa Pio 2", v: 93.9, c: "Parcela" });
+            }
+
+            // WINDOW 4 (Luis) - Fim do Mês
+            data.windows[4].push({ n: "Energia Mensal", v: 340, c: "Consumo" });
             if (m === 2) data.windows[4].push({ n: "BS (QUITAÇÃO)", v: 413, c: "FIM!" });
             if (m <= 8) data.windows[4].push({ n: "Óculos", v: 200, c: "Parcela" });
+
+            // RESERVA ESTRATÉGICA PARA O DIA 01 DO MÊS SEGUINTE
+            // Aparece sempre na Window 4 para garantir o pagamento no dia 1º
+            if (m >= 2) { 
+                data.windows[4].push({ n: "RESERVA: Geladeira", v: 562.39, c: "Venc. 01/prox" });
+                data.windows[4].push({ n: "RESERVA: Armário", v: 148.66, c: "Venc. 01/prox" });
+                if (m <= 4) {
+                    data.windows[4].push({ n: "RESERVA: Casa Pio 1", v: 158, c: "Venc. 01/prox" });
+                }
+            }
+
             return data;
         };
 
@@ -324,9 +340,8 @@
             const key = `${m}-${name}`;
             cloudData[key] = !cloudData[key];
             render();
-            try {
-                await setDoc(doc(db, 'financas_publicas', docId), { items: cloudData }, { merge: true });
-            } catch (e) { console.error(e); }
+            try { await setDoc(doc(db, 'financas_publicas', docId), { items: cloudData }, { merge: true }); } 
+            catch (e) { console.error(e); }
         };
 
         window.changeMonth = (i) => {
@@ -357,14 +372,15 @@
 
                 let itemsHtml = items.map(item => {
                     const isPaid = cloudData[`${currentIdx}-${item.n}`];
+                    const isReserva = item.n.includes("RESERVA");
                     return `
                         <div onclick="toggleItem(${currentIdx}, '${item.n}')" class="flex items-center justify-between p-4 border-b border-slate-700/40 cursor-pointer active:bg-slate-700/20 transition-all ${isPaid ? 'paid-row' : ''}">
                             <div class="flex items-center gap-4">
                                 <div class="check-box ${isPaid ? 'checked' : ''}">
-                                    ${isPaid ? '<i data-lucide="check" class="text-white w-3.5 h-3.5"></i>' : ''}
+                                    ${isPaid ? '<i data-lucide="check" class="text-white w-3 h-3"></i>' : ''}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold text-slate-100">${item.n}</p>
+                                    <p class="text-sm font-bold ${isReserva ? 'text-blue-400' : 'text-slate-100'}">${item.n}</p>
                                     <span class="text-[9px] uppercase tracking-widest text-slate-500 font-black">${item.c}</span>
                                 </div>
                             </div>
@@ -385,9 +401,9 @@
                             </div>
                             <p class="font-black text-sm text-white">R$ ${inc.val.toFixed(2)}</p>
                         </div>
-                        <div class="min-h-[40px]">${itemsHtml || '<p class="p-6 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">Sem despesas</p>'}</div>
+                        <div class="min-h-[40px]">${itemsHtml || '<p class="p-6 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">Sem contas</p>'}</div>
                         <div class="p-4 sub-section flex justify-between items-center border-t border-slate-700 px-6">
-                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sobra Salário</span>
+                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Saldo Parcial</span>
                             <span class="text-sm font-black ${inc.val - windowSpent < 0 ? 'text-rose-500' : 'text-emerald-500'}">
                                 R$ ${(inc.val - windowSpent).toLocaleString('pt-BR', {minimumFractionDigits:2})}
                             </span>
@@ -404,37 +420,33 @@
             document.getElementById('display-month').innerText = months[currentIdx];
 
             const msg = document.getElementById('health-msg');
-            if (balance > 1000) msg.innerText = "Excelente! Mês com margem para poupança.";
-            else if (balance > 500) msg.innerText = "Equilibrado. Saldo disponível para feira e pets.";
-            else msg.innerText = "Atenção: Orçamento justo. Foco no essencial.";
+            if (balance > 1000) msg.innerText = "Excelente! Mês com margem positiva.";
+            else if (balance > 200) msg.innerText = "Equilibrado. Saldo para feira e pets disponível.";
+            else msg.innerText = "Foco total no essencial! Março é um mês de ajuste.";
 
             const events = [
-                { m: 2, t: "Fim BS Quitação", d: "R$ 413 livres", c: "blue" },
-                { m: 4, t: "Fim Casa Pio", d: "Parcela liquidada", c: "emerald" },
-                { m: 5, t: "Fim Móveis", d: "R$ 316 mensais a mais", c: "amber" },
-                { m: 8, t: "Fim Óculos", d: "Fim dos R$ 200", c: "purple" }
+                { m: 2, t: "Fim BS Quitação", d: "R$ 413 livres p/ Abril", c: "blue" },
+                { m: 4, t: "Fim Casa Pio 1", d: "R$ 158 a menos nas contas", c: "emerald" },
+                { m: 5, t: "Fim Móveis", d: "Janela 3 muito mais leve", c: "amber" },
+                { m: 8, t: "Fim Óculos", d: "Todos os eletrônicos pagos", c: "purple" }
             ];
             const timeline = document.getElementById('relief-timeline');
-            if(!timeline) {
-                // Se a timeline-list não estiver dentro de um elemento com ID relief-timeline, usamos o timeline-list direto
-                const tlList = document.getElementById('timeline-list');
-                if(tlList) tlList.innerHTML = events.map(ev => {
-                    const done = currentIdx > ev.m;
-                    return `
-                        <div class="flex gap-5 ${done ? 'opacity-20' : ''}">
-                            <div class="flex flex-col items-center">
-                                <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-${ev.c}-400">
-                                    ${months[ev.m].substring(0,3).toUpperCase()}
-                                </div>
-                                <div class="w-px h-full bg-slate-800 mt-2"></div>
+            timeline.innerHTML = events.map(ev => {
+                const done = currentIdx > ev.m;
+                return `
+                    <div class="flex gap-5 ${done ? 'opacity-20' : ''}">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-${ev.c}-400">
+                                ${months[ev.m].substring(0,3).toUpperCase()}
                             </div>
-                            <div class="pb-6">
-                                <p class="text-sm font-black uppercase tracking-tight text-white mb-1 ${done ? 'line-through' : ''}">${ev.t}</p>
-                                <p class="text-[11px] text-slate-500 font-medium">${ev.d}</p>
-                            </div>
-                        </div>`;
-                }).join('');
-            }
+                            <div class="w-px h-full bg-slate-800 mt-2"></div>
+                        </div>
+                        <div class="pb-6">
+                            <p class="text-sm font-black uppercase tracking-tight text-white mb-1 ${done ? 'line-through' : ''}">${ev.t}</p>
+                            <p class="text-[11px] text-slate-500 font-medium">${ev.d}</p>
+                        </div>
+                    </div>`;
+            }).join('');
             lucide.createIcons();
         };
     </script>
