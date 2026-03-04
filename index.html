@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#0b1120">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584026.png">
 
-    <!-- Referência ao Manifesto -->
+    <!-- Referência ao Manifesto Externo -->
     <link rel="manifest" href="manifest.json">
     
     <title>Planejamento 2026 - Luis & Letícia</title>
@@ -129,16 +129,17 @@
             background: var(--bg-app); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 1000;
         }
-</style>
+    </style>
 </head>
-<body>  
+<body>
+    
     <script>
-        // Registro simplificado do Service Worker (Obrigatório para instalação nativa)
+        // Registro do Service Worker para habilitar instalação nativa
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(() => console.log('PWA Ativo'))
-                    .catch(err => console.log('Erro PWA:', err));
+                    .then(() => console.log('Serviço de App Ativo'))
+                    .catch(err => console.log('Erro no App:', err));
             });
         }
     </script>
@@ -146,13 +147,13 @@
     <!-- Ecrã de Carregamento -->
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Sincronizando Banco de Dados...</p>
+        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Sincronizando Dados...</p>
     </div>
 
     <div class="scroll-container">
         <div class="main-container p-5 md:p-10 pb-24">
             
-            <!-- Barra de Topo -->
+            <!-- Barra de Topo Limpa -->
             <header class="flex flex-col gap-6 mb-8 animate-app">
                 <div class="flex justify-between items-center">
                     <div>
@@ -162,19 +163,13 @@
                         </h1>
                         <div id="status-cloud" class="flex items-center gap-1.5 mt-1">
                             <div class="w-2 h-2 rounded-full bg-slate-600" id="dot"></div>
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">Conectando...</span>
-                        </div>
-                    </div>
-                    
-                  <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-lg border-2 border-white/10">
-                            L&L
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">A ligar...</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="month-nav" id="month-nav">
-                    <!-- Meses injetados -->
+                    <!-- Meses injetados via JS -->
                 </div>
             </header>
 
@@ -212,7 +207,7 @@
                     </div>
 
                     <div id="quinzenas-list" class="space-y-6">
-                        <!-- Conteúdo quinzenal -->
+                        <!-- Conteúdo JS -->
                     </div>
                 </div>
 
@@ -226,7 +221,7 @@
                                 <span class="text-5xl font-black text-emerald-400" id="pets-val">0,00</span>
                             </div>
                             <p id="health-msg" class="text-slate-400 text-xs font-medium italic">
-                                Calculando...
+                                A calcular...
                             </p>
                         </div>
                     </div>
@@ -237,7 +232,7 @@
                             Próximos Alívios
                         </h3>
                         <div class="space-y-8" id="timeline-list">
-                            <!-- Timeline -->
+                            <!-- JS -->
                         </div>
                     </div>
                 </aside>
@@ -420,22 +415,26 @@
                 { m: 8, t: "Fim Óculos", d: "Fim dos R$ 200", c: "purple" }
             ];
             const timeline = document.getElementById('relief-timeline');
-            timeline.innerHTML = events.map(ev => {
-                const done = currentIdx > ev.m;
-                return `
-                    <div class="flex gap-5 ${done ? 'opacity-20' : ''}">
-                        <div class="flex flex-col items-center">
-                            <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-${ev.c}-400">
-                                ${months[ev.m].substring(0,3).toUpperCase()}
+            if(!timeline) {
+                // Se a timeline-list não estiver dentro de um elemento com ID relief-timeline, usamos o timeline-list direto
+                const tlList = document.getElementById('timeline-list');
+                if(tlList) tlList.innerHTML = events.map(ev => {
+                    const done = currentIdx > ev.m;
+                    return `
+                        <div class="flex gap-5 ${done ? 'opacity-20' : ''}">
+                            <div class="flex flex-col items-center">
+                                <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-${ev.c}-400">
+                                    ${months[ev.m].substring(0,3).toUpperCase()}
+                                </div>
+                                <div class="w-px h-full bg-slate-800 mt-2"></div>
                             </div>
-                            <div class="w-px h-full bg-slate-800 mt-2"></div>
-                        </div>
-                        <div class="pb-6">
-                            <p class="text-sm font-black uppercase tracking-tight text-white mb-1 ${done ? 'line-through' : ''}">${ev.t}</p>
-                            <p class="text-[11px] text-slate-500 font-medium">${ev.d}</p>
-                        </div>
-                    </div>`;
-            }).join('');
+                            <div class="pb-6">
+                                <p class="text-sm font-black uppercase tracking-tight text-white mb-1 ${done ? 'line-through' : ''}">${ev.t}</p>
+                                <p class="text-[11px] text-slate-500 font-medium">${ev.d}</p>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
             lucide.createIcons();
         };
     </script>
