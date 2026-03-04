@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#0b1120">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584026.png">
 
-    <!-- Manifesto do Aplicativo (Injetado via Data URI para funcionar em arquivo único) -->
+    <!-- Manifesto do Aplicativo -->
     <link rel="manifest" id="pwa-manifest">
     
     <title>Planejamento 2026 - Luis & Letícia</title>
@@ -129,45 +129,65 @@
             background: var(--bg-app); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 1000;
         }
+
+        #install-button {
+            display: none; /* Escondido por padrão, aparece via JS */
+        }
     </style>
 </head>
 <body>
     
-    <!-- Configuração PWA (Oculto) -->
+    <!-- Configuração PWA -->
     <script>
-        // Cria o manifesto dinamicamente
+        // Criar Manifesto via Data URI (mais estável que Blob)
         const manifest = {
             "name": "Finanças Luis & Letícia",
             "short_name": "Finanças",
-            "start_url": ".",
+            "start_url": "./index.html",
             "display": "standalone",
             "background_color": "#0b1120",
             "theme_color": "#0b1120",
+            "description": "Planeamento Financeiro Familiar 2026",
             "icons": [
                 {
                     "src": "https://cdn-icons-png.flaticon.com/512/584/584026.png",
                     "sizes": "512x512",
-                    "type": "image/png",
-                    "purpose": "any maskable"
+                    "type": "image/png"
                 }
             ]
         };
-        const stringManifest = JSON.stringify(manifest);
-        const blob = new Blob([stringManifest], {type: 'application/json'});
-        const manifestURL = URL.createObjectURL(blob);
-        document.querySelector('#pwa-manifest').setAttribute('href', manifestURL);
+        const manifestStr = encodeURIComponent(JSON.stringify(manifest));
+        document.querySelector('#pwa-manifest').setAttribute('href', "data:application/manifest+json," + manifestStr);
 
-        // Registra um Service Worker "vazio" para habilitar a instalação
+        // Registro do Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    self.addEventListener('install', (event) => { self.skipWaiting(); });
-                    self.addEventListener('fetch', (event) => { event.respondWith(fetch(event.request)); });
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
                 `;
-                const swBlob = new Blob([swCode], {type: 'text/javascript'});
-                const swUrl = URL.createObjectURL(swBlob);
-                navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+                const blob = new Blob([swCode], {type: 'text/javascript'});
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.log(err));
             });
+        }
+
+        // Lógica do Botão de Instalação
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('install-button');
+            if(btn) btn.style.display = 'flex';
+        });
+
+        async function installApp() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                document.getElementById('install-button').style.display = 'none';
+            }
+            deferredPrompt = null;
         }
     </script>
 
@@ -193,8 +213,16 @@
                             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">A conectar...</span>
                         </div>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-lg border-2 border-white/10">
-                        L&L
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- Botão de Instalação (Aparece apenas quando pronto) -->
+                        <button id="install-button" onclick="installApp()" class="hidden items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase px-3 py-2 rounded-xl transition-all shadow-lg shadow-blue-900/20">
+                            <i data-lucide="download" class="w-3 h-3"></i> Instalar App
+                        </button>
+                        
+                        <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-lg border-2 border-white/10">
+                            L&L
+                        </div>
                     </div>
                 </div>
                 
@@ -296,8 +324,10 @@
 
         window.hideLoader = () => {
             const l = document.getElementById('loader');
-            l.style.opacity = '0';
-            setTimeout(() => l.classList.add('hidden'), 500);
+            if(l) {
+                l.style.opacity = '0';
+                setTimeout(() => l.classList.add('hidden'), 500);
+            }
             render();
         };
 
@@ -321,7 +351,7 @@
             const dot = document.getElementById('dot');
             const txt = document.getElementById('status-text');
             if(!dot || !txt) return;
-            dot.className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-50'}`;
+            dot.className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-500'}`;
             txt.innerText = ok ? 'Sincronizado' : 'Offline';
             txt.className = `text-[10px] font-bold uppercase tracking-widest ${ok ? 'text-emerald-500' : 'text-rose-500'}`;
         };
@@ -339,7 +369,7 @@
             data.windows[1].push({ n: "Youcine", v: 17, c: "Fixa" }, { n: "Internet", v: 100, c: "Fixa" }, { n: "Nubank", v: 16, c: "Cartão" });
             if (m === 2) data.windows[1].push({ n: "Energia (Jan)", v: 294, c: "Atraso" });
             if (m <= 4) data.windows[1].push({ n: "Casa Pio 1", v: 158, c: "Parcela" });
-            if (m >= 3) data.windows[1].push({ n: "Geladeira", v: 562.39, c: "Parcela" }, { n: "Armário", v: 148.66, c: "Parcela" });
+            if (m >= 3) data.windows[1].push({ n: "Geladeira", v: 562.39, v2: 562.39, c: "Parcela" }, { n: "Armário", v: 148.66, v2: 148.66, c: "Parcela" });
             data.windows[2].push({ n: "Vilany", v: 550.66, c: "Fixa" }, { n: "Irmão", v: 30, c: "Parcela" });
             if (m <= 5) data.windows[3].push({ n: "Guarda-roupa", v: 223, c: "Parcela" }, { n: "Casa Pio 2", v: 93.9, c: "Parcela" });
             data.windows[4].push({ n: "Energia", v: 340, c: "Consumo" });
