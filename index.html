@@ -11,8 +11,8 @@
     <meta name="theme-color" content="#0b1120">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584026.png">
 
-    <!-- Manifesto do Aplicativo -->
-    <link rel="manifest" id="pwa-manifest">
+    <!-- Referência ao Manifesto -->
+    <link rel="manifest" href="manifest.json">
     
     <title>Planejamento 2026 - Luis & Letícia</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -129,72 +129,24 @@
             background: var(--bg-app); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 1000;
         }
-
-        #install-button {
-            display: none; /* Escondido por padrão, aparece via JS */
-        }
-    </style>
+</style>
 </head>
-<body>
-    
-    <!-- Configuração PWA -->
+<body>  
     <script>
-        // Criar Manifesto via Data URI (mais estável que Blob)
-        const manifest = {
-            "name": "Finanças Luis & Letícia",
-            "short_name": "Finanças",
-            "start_url": "./index.html",
-            "display": "standalone",
-            "background_color": "#0b1120",
-            "theme_color": "#0b1120",
-            "description": "Planeamento Financeiro Familiar 2026",
-            "icons": [
-                {
-                    "src": "https://cdn-icons-png.flaticon.com/512/584/584026.png",
-                    "sizes": "512x512",
-                    "type": "image/png"
-                }
-            ]
-        };
-        const manifestStr = encodeURIComponent(JSON.stringify(manifest));
-        document.querySelector('#pwa-manifest').setAttribute('href', "data:application/manifest+json," + manifestStr);
-
-        // Registro do Service Worker
+        // Registro simplificado do Service Worker (Obrigatório para instalação nativa)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                const swCode = `
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
-                `;
-                const blob = new Blob([swCode], {type: 'text/javascript'});
-                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.log(err));
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => console.log('PWA Ativo'))
+                    .catch(err => console.log('Erro PWA:', err));
             });
-        }
-
-        // Lógica do Botão de Instalação
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const btn = document.getElementById('install-button');
-            if(btn) btn.style.display = 'flex';
-        });
-
-        async function installApp() {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                document.getElementById('install-button').style.display = 'none';
-            }
-            deferredPrompt = null;
         }
     </script>
 
     <!-- Ecrã de Carregamento -->
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">A sincronizar app...</p>
+        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Sincronizando Banco de Dados...</p>
     </div>
 
     <div class="scroll-container">
@@ -210,16 +162,11 @@
                         </h1>
                         <div id="status-cloud" class="flex items-center gap-1.5 mt-1">
                             <div class="w-2 h-2 rounded-full bg-slate-600" id="dot"></div>
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">A conectar...</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">Conectando...</span>
                         </div>
                     </div>
                     
-                    <div class="flex items-center gap-3">
-                        <!-- Botão de Instalação (Aparece apenas quando pronto) -->
-                        <button id="install-button" onclick="installApp()" class="hidden items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase px-3 py-2 rounded-xl transition-all shadow-lg shadow-blue-900/20">
-                            <i data-lucide="download" class="w-3 h-3"></i> Instalar App
-                        </button>
-                        
+                  <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-lg border-2 border-white/10">
                             L&L
                         </div>
@@ -227,7 +174,7 @@
                 </div>
                 
                 <div class="month-nav" id="month-nav">
-                    <!-- Meses -->
+                    <!-- Meses injetados -->
                 </div>
             </header>
 
@@ -265,7 +212,7 @@
                     </div>
 
                     <div id="quinzenas-list" class="space-y-6">
-                        <!-- JS -->
+                        <!-- Conteúdo quinzenal -->
                     </div>
                 </div>
 
@@ -279,7 +226,7 @@
                                 <span class="text-5xl font-black text-emerald-400" id="pets-val">0,00</span>
                             </div>
                             <p id="health-msg" class="text-slate-400 text-xs font-medium italic">
-                                A calcular...
+                                Calculando...
                             </p>
                         </div>
                     </div>
@@ -290,7 +237,7 @@
                             Próximos Alívios
                         </h3>
                         <div class="space-y-8" id="timeline-list">
-                            <!-- JS -->
+                            <!-- Timeline -->
                         </div>
                     </div>
                 </aside>
@@ -316,7 +263,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const docId = "planejamento_app_v2_2026";
+        const docId = "planejamento_app_final_2026";
 
         const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         let currentIdx = 2; 
@@ -369,7 +316,7 @@
             data.windows[1].push({ n: "Youcine", v: 17, c: "Fixa" }, { n: "Internet", v: 100, c: "Fixa" }, { n: "Nubank", v: 16, c: "Cartão" });
             if (m === 2) data.windows[1].push({ n: "Energia (Jan)", v: 294, c: "Atraso" });
             if (m <= 4) data.windows[1].push({ n: "Casa Pio 1", v: 158, c: "Parcela" });
-            if (m >= 3) data.windows[1].push({ n: "Geladeira", v: 562.39, v2: 562.39, c: "Parcela" }, { n: "Armário", v: 148.66, v2: 148.66, c: "Parcela" });
+            if (m >= 3) data.windows[1].push({ n: "Geladeira", v: 562.39, c: "Parcela" }, { n: "Armário", v: 148.66, c: "Parcela" });
             data.windows[2].push({ n: "Vilany", v: 550.66, c: "Fixa" }, { n: "Irmão", v: 30, c: "Parcela" });
             if (m <= 5) data.windows[3].push({ n: "Guarda-roupa", v: 223, c: "Parcela" }, { n: "Casa Pio 2", v: 93.9, c: "Parcela" });
             data.windows[4].push({ n: "Energia", v: 340, c: "Consumo" });
@@ -426,7 +373,7 @@
                                     <span class="text-[9px] uppercase tracking-widest text-slate-500 font-black">${item.c}</span>
                                 </div>
                             </div>
-                            <p class="font-black text-sm text-slate-200">R$ ${item.v.toLocaleString('pt-PT', {minimumFractionDigits:2})}</p>
+                            <p class="font-black text-sm text-slate-200">R$ ${item.v.toLocaleString('pt-BR', {minimumFractionDigits:2})}</p>
                         </div>
                     `;
                 }).join('');
@@ -447,7 +394,7 @@
                         <div class="p-4 sub-section flex justify-between items-center border-t border-slate-700 px-6">
                             <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sobra Salário</span>
                             <span class="text-sm font-black ${inc.val - windowSpent < 0 ? 'text-rose-500' : 'text-emerald-500'}">
-                                R$ ${(inc.val - windowSpent).toLocaleString('pt-PT', {minimumFractionDigits:2})}
+                                R$ ${(inc.val - windowSpent).toLocaleString('pt-BR', {minimumFractionDigits:2})}
                             </span>
                         </div>
                     </div>
@@ -456,9 +403,9 @@
 
             const totalIncome = 3077.34;
             const balance = totalIncome - totalSpent;
-            document.getElementById('label-spent').innerText = `R$ ${totalSpent.toLocaleString('pt-PT', {minimumFractionDigits:2})}`;
-            document.getElementById('label-free').innerText = `R$ ${balance.toLocaleString('pt-PT', {minimumFractionDigits:2})}`;
-            document.getElementById('pets-val').innerText = `${balance.toLocaleString('pt-PT', {minimumFractionDigits:2})}`;
+            document.getElementById('label-spent').innerText = `R$ ${totalSpent.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+            document.getElementById('label-free').innerText = `R$ ${balance.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+            document.getElementById('pets-val').innerText = `${balance.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
             document.getElementById('display-month').innerText = months[currentIdx];
 
             const msg = document.getElementById('health-msg');
@@ -472,7 +419,7 @@
                 { m: 5, t: "Fim Móveis", d: "R$ 316 mensais a mais", c: "amber" },
                 { m: 8, t: "Fim Óculos", d: "Fim dos R$ 200", c: "purple" }
             ];
-            const timeline = document.getElementById('timeline-list');
+            const timeline = document.getElementById('relief-timeline');
             timeline.innerHTML = events.map(ev => {
                 const done = currentIdx > ev.m;
                 return `
@@ -487,8 +434,7 @@
                             <p class="text-sm font-black uppercase tracking-tight text-white mb-1 ${done ? 'line-through' : ''}">${ev.t}</p>
                             <p class="text-[11px] text-slate-500 font-medium">${ev.d}</p>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
             lucide.createIcons();
         };
