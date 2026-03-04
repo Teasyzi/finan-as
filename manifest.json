@@ -1,0 +1,17 @@
+{
+"name": "Finanças Luis & Letícia",
+"short_name": "Finanças",
+"start_url": "index.html",
+"display": "standalone",
+"background_color": "#0b1120",
+"theme_color": "#0b1120",
+"description": "Planeamento Financeiro Familiar 2026",
+"icons": [
+{
+"src": "https://cdn-icons-png.flaticon.com/512/584/584026.png",
+"sizes": "512x512",
+"type": "image/png",
+"purpose": "any maskable"
+}
+]
+}
