@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- Meta-tags para funcionar como Aplicação -->
+    <!-- Meta-tags para App Nativo -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Finanças 2026">
     <meta name="theme-color" content="#0b1120">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/584/584026.png">
+
+    <!-- Manifesto do Aplicativo (Injetado via Data URI para funcionar em arquivo único) -->
+    <link rel="manifest" id="pwa-manifest">
     
     <title>Planejamento 2026 - Luis & Letícia</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +21,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        /* Configuração de Cores Premium Dark */
         :root {
             --bg-app: #0b1120;
             --bg-card: #1e293b;
@@ -37,7 +39,6 @@
             margin: 0;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
-            /* Evita scroll elástico no iOS para parecer uma app nativa */
             position: fixed;
             width: 100%;
             height: 100%;
@@ -65,7 +66,6 @@
             background-color: var(--bg-sub);
         }
 
-        /* Seletor de Meses Estilo App Navigation */
         .month-nav {
             display: flex;
             overflow-x: auto;
@@ -95,7 +95,6 @@
             box-shadow: 0 4px 15px var(--accent-glow);
         }
 
-        /* Linha de Despesa Paga */
         .paid-row { 
             opacity: 0.3; 
             filter: grayscale(1);
@@ -104,14 +103,12 @@
         
         .paid-row p { text-decoration: line-through; }
 
-        /* Animações de Transição */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-app { animation: fadeInUp 0.5s ease-out forwards; }
 
-        /* Estilo da Checkbox */
         .check-box {
             width: 1.5rem;
             height: 1.5rem;
@@ -127,7 +124,6 @@
             border-color: #10b981;
         }
 
-        /* Loader Nativo */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-app); display: flex; flex-direction: column;
@@ -137,16 +133,54 @@
 </head>
 <body>
     
+    <!-- Configuração PWA (Oculto) -->
+    <script>
+        // Cria o manifesto dinamicamente
+        const manifest = {
+            "name": "Finanças Luis & Letícia",
+            "short_name": "Finanças",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#0b1120",
+            "theme_color": "#0b1120",
+            "icons": [
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/584/584026.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                }
+            ]
+        };
+        const stringManifest = JSON.stringify(manifest);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        document.querySelector('#pwa-manifest').setAttribute('href', manifestURL);
+
+        // Registra um Service Worker "vazio" para habilitar a instalação
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    self.addEventListener('install', (event) => { self.skipWaiting(); });
+                    self.addEventListener('fetch', (event) => { event.respondWith(fetch(event.request)); });
+                `;
+                const swBlob = new Blob([swCode], {type: 'text/javascript'});
+                const swUrl = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+            });
+        }
+    </script>
+
     <!-- Ecrã de Carregamento -->
     <div id="loader" class="loading-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">A carregar aplicação...</p>
+        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">A sincronizar app...</p>
     </div>
 
     <div class="scroll-container">
         <div class="main-container p-5 md:p-10 pb-24">
             
-            <!-- Barra de Topo Nativa -->
+            <!-- Barra de Topo -->
             <header class="flex flex-col gap-6 mb-8 animate-app">
                 <div class="flex justify-between items-center">
                     <div>
@@ -156,27 +190,22 @@
                         </h1>
                         <div id="status-cloud" class="flex items-center gap-1.5 mt-1">
                             <div class="w-2 h-2 rounded-full bg-slate-600" id="dot"></div>
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">A ligar...</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">A conectar...</span>
                         </div>
                     </div>
-                    <!-- Avatar/Identificador -->
                     <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-black text-white shadow-lg border-2 border-white/10">
                         L&L
                     </div>
                 </div>
                 
-                <!-- Navegação de Meses -->
                 <div class="month-nav" id="month-nav">
-                    <!-- Injetado via JS -->
+                    <!-- Meses -->
                 </div>
             </header>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                <!-- Área Principal -->
                 <div class="lg:col-span-8 space-y-6">
-                    
-                    <!-- Card de Resumo -->
                     <div class="card-custom p-6 md:p-8 flex flex-col sm:flex-row justify-between items-center gap-6 animate-app">
                         <div class="text-center sm:text-left">
                             <h2 class="text-3xl font-black text-blue-400" id="display-month">Março</h2>
@@ -195,30 +224,26 @@
                         </div>
                     </div>
 
-                    <!-- Alerta Março -->
                     <div id="alert-box" class="hidden animate-app">
                         <div class="bg-amber-900/10 border border-amber-900/30 rounded-2xl p-6 flex items-center gap-5">
                             <div class="w-12 h-12 bg-amber-900/30 rounded-full flex items-center justify-center text-amber-500 shrink-0">
                                 <i data-lucide="alert-circle" class="w-6 h-6"></i>
                             </div>
                             <p class="text-sm text-amber-200/80">
-                                <span class="font-bold text-amber-400 block mb-1 uppercase text-xs tracking-wider">Atenção: Reserva Abril</span>
+                                <span class="font-bold text-amber-400 block mb-1 uppercase text-xs tracking-wider">Reserva Abril</span>
                                 Separe <b>R$ 172,05</b> deste mês para cobrir a primeira quinzena de Abril.
                             </p>
                         </div>
                     </div>
 
-                    <!-- Quinzenas -->
                     <div id="quinzenas-list" class="space-y-6">
-                        <!-- Conteúdo dinâmico -->
+                        <!-- JS -->
                     </div>
                 </div>
 
-                <!-- Barra Lateral -->
                 <aside class="lg:col-span-4 space-y-6 animate-app">
-                    <!-- Card Compras -->
                     <div class="card-custom bg-gradient-to-br from-slate-900 to-blue-950 p-8 relative overflow-hidden border-white/5">
-                        <i data-lucide="dog" class="absolute -right-6 -bottom-6 w-32 h-32 opacity-10 rotate-12 text-white"></i>
+                        <i data-lucide="dog" class="absolute -right-8 -bottom-8 w-40 h-40 opacity-10 rotate-12 text-white"></i>
                         <div class="relative z-10">
                             <h3 class="text-blue-400 font-black uppercase text-[10px] tracking-widest mb-4">Feira e Pets</h3>
                             <div class="flex items-baseline gap-1 mb-2">
@@ -226,19 +251,18 @@
                                 <span class="text-5xl font-black text-emerald-400" id="pets-val">0,00</span>
                             </div>
                             <p id="health-msg" class="text-slate-400 text-xs font-medium italic">
-                                A calcular saúde financeira...
+                                A calcular...
                             </p>
                         </div>
                     </div>
 
-                    <!-- Timeline -->
                     <div class="card-custom p-6">
                         <h3 class="font-bold mb-6 text-xs uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
                             <i data-lucide="target" class="w-4 h-4 text-blue-500"></i>
                             Próximos Alívios
                         </h3>
                         <div class="space-y-8" id="timeline-list">
-                            <!-- Gerado via JS -->
+                            <!-- JS -->
                         </div>
                     </div>
                 </aside>
@@ -252,7 +276,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuração Firebase (Luis & Letícia)
         const firebaseConfig = {
             apiKey: "AIzaSyAOq-ucyKVgebl9dmBLHDXSL47rUIKjcUA",
             authDomain: "financas-9e802.firebaseapp.com",
@@ -265,13 +288,12 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const docId = "planejamento_app_v1_2026";
+        const docId = "planejamento_app_v2_2026";
 
         const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        let currentIdx = 2; // Começa em Março
+        let currentIdx = 2; 
         let cloudData = {};
 
-        // --- Gestão de App ---
         window.hideLoader = () => {
             const l = document.getElementById('loader');
             l.style.opacity = '0';
@@ -279,7 +301,6 @@
             render();
         };
 
-        // --- Firebase Sync ---
         signInAnonymously(auth).catch(() => hideLoader());
 
         onAuthStateChanged(auth, (user) => {
@@ -299,13 +320,13 @@
         const updateCloudStatus = (ok) => {
             const dot = document.getElementById('dot');
             const txt = document.getElementById('status-text');
-            dot.className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-500'}`;
+            if(!dot || !txt) return;
+            dot.className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-50'}`;
             txt.innerText = ok ? 'Sincronizado' : 'Offline';
             txt.className = `text-[10px] font-bold uppercase tracking-widest ${ok ? 'text-emerald-500' : 'text-rose-500'}`;
         };
 
-        // --- Lógica Financeira ---
-        const getWindows = (m) => {
+        const getWindowsData = (m) => {
             const data = { 
                 incomes: [
                     { name: "Letícia (1ª Q)", val: 830, details: "5º Dia Útil" },
@@ -315,21 +336,15 @@
                 ],
                 windows: { 1: [], 2: [], 3: [], 4: [] }
             };
-
-            // Regras de Despesas
             data.windows[1].push({ n: "Youcine", v: 17, c: "Fixa" }, { n: "Internet", v: 100, c: "Fixa" }, { n: "Nubank", v: 16, c: "Cartão" });
             if (m === 2) data.windows[1].push({ n: "Energia (Jan)", v: 294, c: "Atraso" });
             if (m <= 4) data.windows[1].push({ n: "Casa Pio 1", v: 158, c: "Parcela" });
             if (m >= 3) data.windows[1].push({ n: "Geladeira", v: 562.39, c: "Parcela" }, { n: "Armário", v: 148.66, c: "Parcela" });
-
             data.windows[2].push({ n: "Vilany", v: 550.66, c: "Fixa" }, { n: "Irmão", v: 30, c: "Parcela" });
-
             if (m <= 5) data.windows[3].push({ n: "Guarda-roupa", v: 223, c: "Parcela" }, { n: "Casa Pio 2", v: 93.9, c: "Parcela" });
-
             data.windows[4].push({ n: "Energia", v: 340, c: "Consumo" });
             if (m === 2) data.windows[4].push({ n: "BS (QUITAÇÃO)", v: 413, c: "FIM!" });
             if (m <= 8) data.windows[4].push({ n: "Óculos", v: 200, c: "Parcela" });
-
             return data;
         };
 
@@ -347,21 +362,17 @@
             render();
         };
 
-        // --- Renderização App ---
         const render = () => {
-            const data = getWindows(currentIdx);
-            
-            // Nav Meses
+            const data = getWindowsData(currentIdx);
             const nav = document.getElementById('month-nav');
+            if(!nav) return;
             nav.innerHTML = months.slice(2).map((m, i) => {
                 const idx = i + 2;
                 return `<button onclick="changeMonth(${idx})" class="month-btn ${currentIdx === idx ? 'active' : ''}">${m.substring(0,3).toUpperCase()}</button>`;
             }).join('');
 
-            // Alerta Estratégico
             document.getElementById('alert-box').classList.toggle('hidden', currentIdx !== 2);
 
-            // Lista de Quinzenas
             const list = document.getElementById('quinzenas-list');
             list.innerHTML = '';
             let totalSpent = 0;
@@ -402,7 +413,7 @@
                             </div>
                             <p class="font-black text-sm text-white">R$ ${inc.val.toFixed(2)}</p>
                         </div>
-                        <div class="min-h-[60px]">${itemsHtml || '<p class="p-8 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">Sem despesas</p>'}</div>
+                        <div class="min-h-[40px]">${itemsHtml || '<p class="p-6 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">Sem despesas</p>'}</div>
                         <div class="p-4 sub-section flex justify-between items-center border-t border-slate-700 px-6">
                             <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sobra Salário</span>
                             <span class="text-sm font-black ${inc.val - windowSpent < 0 ? 'text-rose-500' : 'text-emerald-500'}">
@@ -413,7 +424,6 @@
                 `;
             });
 
-            // Balanço Final
             const totalIncome = 3077.34;
             const balance = totalIncome - totalSpent;
             document.getElementById('label-spent').innerText = `R$ ${totalSpent.toLocaleString('pt-PT', {minimumFractionDigits:2})}`;
@@ -422,20 +432,15 @@
             document.getElementById('display-month').innerText = months[currentIdx];
 
             const msg = document.getElementById('health-msg');
-            if (balance > 1000) msg.innerText = "Excelente! Mês com margem para poupança ou extras.";
-            else if (balance > 500) msg.innerText = "Equilibrado. Saldo disponível para feira e despesas pet.";
-            else msg.innerText = "Atenção: Orçamento muito justo. Prioridade ao essencial.";
+            if (balance > 1000) msg.innerText = "Excelente! Mês com margem para poupança.";
+            else if (balance > 500) msg.innerText = "Equilibrado. Saldo disponível para feira e pets.";
+            else msg.innerText = "Atenção: Orçamento justo. Foco no essencial.";
 
-            renderTimeline();
-            lucide.createIcons();
-        };
-
-        const renderTimeline = () => {
             const events = [
                 { m: 2, t: "Fim BS Quitação", d: "R$ 413 livres", c: "blue" },
-                { m: 4, t: "Fim Casa Pio", d: "Parcela de 158 liquidada", c: "emerald" },
-                { m: 5, t: "Fim Móveis", d: "Alívio de R$ 316 mensais", c: "amber" },
-                { m: 8, t: "Fim Óculos", d: "Libertação de R$ 200", c: "purple" }
+                { m: 4, t: "Fim Casa Pio", d: "Parcela liquidada", c: "emerald" },
+                { m: 5, t: "Fim Móveis", d: "R$ 316 mensais a mais", c: "amber" },
+                { m: 8, t: "Fim Óculos", d: "Fim dos R$ 200", c: "purple" }
             ];
             const timeline = document.getElementById('timeline-list');
             timeline.innerHTML = events.map(ev => {
@@ -455,6 +460,7 @@
                     </div>
                 `;
             }).join('');
+            lucide.createIcons();
         };
     </script>
 </body>
